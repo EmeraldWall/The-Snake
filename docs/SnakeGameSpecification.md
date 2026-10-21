@@ -1,7 +1,7 @@
 # The Snake for Android 17
 
 Software Requirements and Design Specification
-Version 1.0, October 2026
+Version 1.1, October 2026 (updated after the UI and UX audit in `UIUXAudit.md`)
 
 ## 1. Purpose
 
@@ -20,6 +20,7 @@ The app is built only with .NET MAUI inside Visual Studio. It uses no game engin
 * Short beeps and vibration feedback
 * Local high score table and settings that survive app restarts
 * Pause and resume when the app goes to the background
+* Sharing a score as text through the Android share sheet
 
 ### 2.2 Out of scope for version 1.0
 
@@ -127,7 +128,11 @@ The player picks a level from 1 to 9 before starting. Speed never changes during
 
 ### 4.9 Score display
 
-A status bar above the playfield shows the score with 4 digits and leading zeros (for example `0042`) on the left, and the critter countdown on the right while a critter is on screen.
+A status bar above the playfield shows
+
+* the score on the left with 5 digits and leading zeros (for example `00042`), capped at 99999
+* while a critter is on screen, the critter icon with a shrinking bar and the number of ticks left
+* a pause icon on the right, shown in every control mode, with a 48 dp touch target
 
 ## 5. Screens and flow
 
@@ -135,13 +140,14 @@ A status bar above the playfield shows the score with 4 digits and leading zeros
 
 | Screen | Contents |
 |---|---|
-| Splash | Pixel art snake logo for 1.5 seconds, tap to skip |
-| Main menu | New game, Continue (only when a paused game exists), Level, Mode, Top scores, Settings, Instructions |
+| Launch | Only the system launch splash built from `Resources/Splash`. There is no separate splash page |
+| Main menu | Pixel art snake logo at the top, then New game, Continue (only when a paused game exists), Level, Mode, Top scores, Settings, Instructions |
+| Mode menu | Classic walls off, Classic walls on, Maze, with a small preview of each maze drawn by `GameDrawable` |
 | Game | Status bar, playfield, on screen keypad (when enabled) |
 | Pause overlay | "Paused" text, Continue, Restart, Main menu |
-| Game over | Score, high score name entry if earned, Play again, Main menu |
+| Game over | Score, high score name entry if earned (filled with the last name used, keyboard opens only on tap), Play again (selected by default), Share, Main menu |
 | Top scores | Top 10 table per mode with name (up to 8 characters), score, level and date |
-| Settings | Sound on or off, Vibration on or off, Controls (Swipe, Keypad, Both), Keypad side (left or right handed), Colour theme, Reset scores |
+| Settings | Sound on or off, Vibration on or off, Controls (Swipe, Keypad, Both), Keypad side (left or right handed), Colour theme, Retro screen blur (decorative, off by default), Reset scores (asks for confirmation, default button Cancel, delete button "Delete all scores") |
 | Instructions | Short text and a picture of the controls |
 
 ### 5.2 Menu style
@@ -164,16 +170,28 @@ The game logic has these states and only these transitions.
 | GameOver or Won | Play again | Ready |
 | Any | Main menu | Leaves the game page |
 
+### 5.4 First game help
+
+* In the Ready state a one line hint matching the chosen controls is shown over the playfield, such as "Swipe to start" or "Press 2, 4, 6 or 8".
+* On the very first game a small picture of the controls is shown with the hint.
+* The hint disappears on the first input.
+
+### 5.5 Share
+
+The Share button uses `Share.Default.RequestAsync` with a `ShareTextRequest`, which is part of MAUI. Example text is "I scored 01234 on level 7 in The Snake (Classic, walls off)".
+
 ## 6. Controls
 
 ### 6.1 Swipe
 
 * A swipe is recognised after the finger moves at least **24 dp**. The longer axis decides the direction.
+* A swipe only counts if the finger first touched at least 24 dp in from the left and right screen edges, so it does not clash with the Android back gesture. When gesture navigation is on and controls are set to Swipe, the tip "Swipe from the middle of the screen" is shown once.
 * Swipes are read with a `PanGestureRecognizer` on the playfield so one long drag can produce several turns, one every time the finger travels 24 dp in a new direction.
 
 ### 6.2 On screen keypad
 
 * A 3 by 3 Nokia style number pad below the playfield in portrait, or beside it in landscape.
+* Keys are at least 64 by 64 dp on phones and never smaller than 48 by 48 dp, with at least 8 dp between keys.
 * Keys 2, 4, 6 and 8 turn up, left, right and down. Key 5 pauses.
 * Each key press gives a 10 ms haptic tick when vibration is on.
 * Keys respond on press, not on release, to keep input fast.
@@ -207,7 +225,7 @@ The whole app, menus included, uses only the 2 colours of the chosen theme, so i
 
 ### 7.3 LCD ghosting (optional, Settings switch)
 
-Old phone screens left a faint trail when pixels changed. When this option is on, the cell the tail just left is drawn at 30 percent opacity for one tick.
+Old phone screens left a faint trail when pixels changed. This option is off by default. When it is on, the cell the tail just left is drawn at 30 percent opacity for one tick.
 
 ### 7.4 Adaptive layout
 
@@ -215,6 +233,12 @@ Old phone screens left a faint trail when pixels changed. When this option is on
 * The game page listens to `SizeChanged` and recalculates cell size, keypad placement and letterboxing.
 * On screens 600 dp wide or more, the keypad is drawn at a fixed comfortable size rather than stretched.
 * Use safe area aware layout so nothing sits under the status bar, navigation bar or camera cutout.
+
+### 7.5 Text size and motion
+
+* Menus, settings, instructions and dialogs follow the Android font scale up to 200 percent and stay usable.
+* Text drawn inside the playfield (score, "Paused", countdown) does not scale but is never less than 16 dp tall.
+* When the Android "Remove animations" setting is on, the bulge animation is skipped and the death blink is replaced by the snake showing solid for 750 ms. The setting is read in `Platforms/Android`.
 
 ## 8. Sound and vibration
 
@@ -226,7 +250,8 @@ Old phone screens left a faint trail when pixels changed. When this option is on
 | Death | Long low beep, 400 ms | 300 ms |
 | Menu move | Very short tick, 15 ms | None |
 
-* Sound and vibration each have their own setting.
+* Sound and vibration each have their own setting. Both are on by default.
+* Beeps play on the media volume stream so the phone's volume buttons control them.
 * Sound is played through a small `ISoundService` interface. The Android implementation lives in `Platforms/Android/SoundService.cs` and wraps `Android.Media.ToneGenerator`. Other platforms get an empty implementation.
 * Vibration uses MAUI `HapticFeedback` for clicks and `Vibration` for longer buzzes. Add the `VIBRATE` permission to `AndroidManifest.xml`.
 
@@ -265,7 +290,6 @@ TheSnake.sln
       SettingsViewModel.cs
       HighScoresViewModel.cs
     Views/
-      SplashPage.xaml
       MenuPage.xaml
       GamePage.xaml
       SettingsPage.xaml
@@ -357,6 +381,7 @@ The release is accepted when:
 4. High scores and settings survive closing and reopening the app.
 5. Sending the app to the background and back never loses a game in progress.
 6. No third party packages appear in the project file.
+7. Every decision D1 to D17 in `UIUXAudit.md` is implemented.
 
 ## 12. Build and release
 
@@ -378,6 +403,9 @@ The release is accepted when:
 * Android Developers, "Set up the Android 17 SDK" (compileSdk and targetSdk 37). https://developer.android.com/about/versions/17/setup-sdk
 * Android Developers Blog, "Prepare your app for the resizability and orientation changes in Android 17" (February 2026). https://android-developers.googleblog.com/2026/02/prepare-your-app-for-resizability-and.html
 * Microsoft .NET Blog, ".NET 11 RC 2" (13 October 2026). https://devblogs.microsoft.com/dotnet/dotnet-11-rc-2/
+* Android Developers, "Migrate your splash screen implementation to Android 12 and later". https://developer.android.com/guide/topics/ui/splash-screen/migrate
+* Android Developers, "Make apps more accessible" (48 dp touch targets). https://developer.android.com/guide/topics/ui/accessibility/apps
+* Microsoft Learn, ".NET MAUI Share". https://learn.microsoft.com/en-us/dotnet/maui/platform-integration/data/share
 * Start Debugging, "Migrate a .NET MAUI Android app to target Android API level 36" (default API levels for net10.0-android and net11.0-android). https://startdebugging.net/2026/09/migrate-a-dotnet-maui-android-app-to-target-android-api-level-36/
 
 The gameplay numbers in this document (grid size, speeds, scores, critter timing) are design choices for this project. They are inspired by the Nokia games but are not claimed to be exact copies of them.
