@@ -1,6 +1,6 @@
 # The Snake UI and UX Audit
 
-Audit of `SnakeGameSpecification.md` version 1.0, with design decisions backed by the Theory of Planned Behaviour, Innovation Diffusion Theory and VRIO
+Audit of `SnakeGameSpecification.md` version 1.0, with design decisions backed by the Theory of Planned Behaviour, Innovation Diffusion Theory and VRIO. Section 10 audits the version 2.0 changes (ads, purchase, online play, modern rules)
 October 2026
 
 ## 1. Summary
@@ -267,3 +267,34 @@ The theory based assumptions above should be checked with real players.
 [10] Barney, J. (1991). "Firm Resources and Sustained Competitive Advantage." Journal of Management, 17(1), 99 to 120. The 1991 paper used the VRIN criteria, and the "Organisation" question was added in Barney's later work (1995). Overview at https://en.wikipedia.org/wiki/VRIO
 
 [11] Microsoft Learn, ".NET MAUI Share". https://learn.microsoft.com/en-us/dotnet/maui/platform-integration/data/share
+
+## 10. Addendum. Audit of spec version 2.0
+
+Version 2.0 adds a banner ad, a Remove ads purchase, Google Play Games, Nearby Battle and modern rules. The VRIO rows in section 6 that rejected ads and online leaderboards are replaced by the business need for income, see `MarketStrategy.md` version 2. Decisions D1 to D16 still apply. D17 is replaced by the decisions below.
+
+### 10.1 Findings
+
+| ID | Severity | Finding | Fix in spec 2.0 |
+|---|---|---|---|
+| UX 17 | High | A banner right under the arena or keypad invites accidental taps. AdMob names banners near app elements and beside game play screens as a main cause of accidental clicks [12] | Reserved ad strip, 24 dp gap with a divider, ignored touch zone, D pad at least 48 dp above the strip (spec 9.1) |
+| UX 18 | High | If the banner loads late, the layout jumps and the arena moves under the player's finger | Strip height reserved from the start using the adaptive banner height (spec 9.1) |
+| UX 19 | High | Players who paid to remove ads and then see ads again (after an update, a reinstall or offline) feel cheated | Restore on every launch and resume, local cache, ads return only after a successful query without the product (spec 9.2) |
+| UX 20 | Medium | A consent form before the first run slows the first play | Show the form only where needed, then go straight into the first run (spec 7) |
+| UX 21 | Medium | Remove ads offers can turn into nagging | Fixed entry points and at most once per session on Game over. Never a pop up during play (spec 9.2) |
+| UX 22 | Medium | An empty ad strip looks broken, and a tappable house ad near controls has the same accidental tap problem | Quiet house message that does nothing during play, a button only in menus (spec 9.1) |
+| UX 23 | Medium | Many new systems (power ups, combo, missions) can overload new players | Power ups start appearing after 12 foods, one timed power up at a time, the HUD shows one ring and one bar. Missions only on Home |
+| UX 24 | Medium | Power ups and battle snakes told apart only by colour fail colour blind players | Unique shapes for power ups and unique body patterns for battle snakes (spec 4.4 and 5.2) |
+| UX 25 | Medium | Nearby permission prompts at first launch look suspicious | Asked only when Nearby Battle is opened, after a plain screen that says why (spec 5.2) |
+| UX 26 | Medium | Sign in failures could block play | Play Games sign in is automatic and the game works fully without it (spec 10) |
+| UX 27 | Medium | Shake, particles and glow can bother some players | Follow the Android "Remove animations" setting, plus an in game override (spec 11) |
+| UX 28 | Low | "Addictive" design can slide into dark patterns | No energy, no loot boxes, no guilt on lost streaks, optional break reminder (spec 6) |
+| UX 29 | Low | Small phones with a D pad leave too little room for the arena | D pad only when cells stay at least 10 dp, otherwise suggest landscape (spec 8) |
+| UX 30 | Low | Players do not know who to beat next | "Next rival" scores just above and below on results (spec 5.1) |
+
+### 10.2 Death effect check
+
+Version 1.2 used a 3 times blink. Version 2.0 uses a 600 ms shake and fade with no flashing, so the WCAG three flashes rule [4] is met with room to spare.
+
+### 10.3 Extra references
+
+[12] AdMob Help, "Banner ad implementation guidance". https://support.google.com/admob/answer/6275345
