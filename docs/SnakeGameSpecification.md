@@ -1,7 +1,7 @@
 # The Snake for Android 17
 
 Software Requirements and Design Specification
-Version 1.1, October 2026 (updated after the UI and UX audit in `UIUXAudit.md`)
+Version 1.2, October 2026 (updated after the UI and UX audit in `UIUXAudit.md` and the positioning work in `MarketStrategy.md`)
 
 ## 1. Purpose
 
@@ -21,12 +21,17 @@ The app is built only with .NET MAUI inside Visual Studio. It uses no game engin
 * Local high score table and settings that survive app restarts
 * Pause and resume when the app goes to the background
 * Sharing a score as text through the Android share sheet
+* Daily challenge and seed challenge codes, with no server
+* Purist and Modern play styles
+* 12 local medals
+* Settings, scores and medals restored on a new phone through Android Auto Backup
 
 ### 2.2 Out of scope for version 1.0
 
-* Online leaderboards, accounts or cloud sync
-* Multiplayer of any kind
-* Ads, in app purchases or analytics
+* Online leaderboards, accounts or live cloud sync between devices (restore on a new phone is covered by Auto Backup, see 9.3)
+* Online multiplayer of any kind
+* Ads, in app purchases, analytics or push notifications
+* Any use of the internet. The Release build requests no internet permission
 * iOS, Windows and macOS builds (the code must stay portable, but only Android is shipped and tested)
 
 ## 3. Technology constraints
@@ -108,6 +113,49 @@ If the snake fills every free cell, the player wins. Show "Well done!" and award
 | Classic, walls on | Touching an edge ends the game |
 | Maze | Walls always on, plus one of 5 fixed maze layouts chosen in the menu (Box, Tunnel, Mill, Rails, Apartment) |
 
+### 4.7.1 Play styles
+
+| Style | Rules |
+|---|---|
+| Modern (default) | Everything in this spec, including the 2 turn input queue, the resume countdown and the 5 digit score |
+| Purist | A 1 turn input queue, no countdown after resume (the game stays paused until the first direction input), and a 4 digit score display capped at 9999 |
+
+The style is chosen in Settings and stored with each high score. Top scores are kept separately for each style.
+
+### 4.7.2 Daily challenge
+
+* A Daily challenge item on the main menu starts a game in Classic, walls off, at level 5.
+* The random seed is built from the local date (year, month and day) with a fixed salt, so every player gets the same food and critter sequence on the same date with no server.
+* The first finished game of the day is the scored attempt. Later games that day are practice and are not stored as the daily result.
+* The last 30 daily results are kept, and the screen shows the current streak of days played.
+* Share text example is "The Snake daily 2026 10 22. 00318 points. Streak 4".
+
+### 4.7.3 Seed challenge codes
+
+* Every finished game has an 8 character code in Crockford Base32 (no I, L, O or U, so it is easy to type). The code holds a 30 bit seed, a 4 bit level, a 3 bit mode and maze number, and a 3 bit check value.
+* The Game over screen shows the code and the Share text includes it, for example "Beat my 01234 on board K7Q2M9XA".
+* Enter code on the main menu takes a code, checks it, and starts the same board, level and mode. A wrong code shows "That code does not look right. Check the letters and try again."
+* The same seed always gives the same food and critter sequence because the engine only uses the injected `IRandomSource`.
+
+### 4.7.4 Medals
+
+12 medals are earned and kept on the phone. Each shows on the Medals screen with the date it was earned.
+
+| Medal | How to earn it |
+|---|---|
+| First bite | Eat your first food |
+| Ten long | Reach a length of 10 |
+| Fifty long | Reach a length of 50 |
+| Critter catcher | Eat 10 critters in total |
+| Quick paws | Eat a critter with 15 or more ticks left |
+| Speed demon | Score 500 or more at level 9 |
+| Maze runner | Finish a game of 100 points or more in every maze |
+| Wrap master | Pass through an edge 100 times in one game |
+| Daily habit | Play the daily challenge 7 days in a row |
+| Challenger | Play a game from a challenge code |
+| Purist | Score 1000 or more in Purist style |
+| Full screen | Fill the whole grid |
+
 Maze layouts are stored as plain text files in `Resources/Raw/Mazes`, one character per cell, where `#` is a block and `.` is empty. The layout is scaled to fit the portrait or landscape grid by rotating it 90 degrees for landscape.
 
 ### 4.8 Levels and speed
@@ -141,13 +189,17 @@ A status bar above the playfield shows
 | Screen | Contents |
 |---|---|
 | Launch | Only the system launch splash built from `Resources/Splash`. There is no separate splash page |
-| Main menu | Pixel art snake logo at the top, then New game, Continue (only when a paused game exists), Level, Mode, Top scores, Settings, Instructions |
+| Main menu | Pixel art snake logo at the top, then New game, Continue (only when a paused game exists), Daily challenge, Enter code, Level, Mode, Top scores, Medals, Settings, Instructions |
 | Mode menu | Classic walls off, Classic walls on, Maze, with a small preview of each maze drawn by `GameDrawable` |
 | Game | Status bar, playfield, on screen keypad (when enabled) |
 | Pause overlay | "Paused" text, Continue, Restart, Main menu |
-| Game over | Score, high score name entry if earned (filled with the last name used, keyboard opens only on tap), Play again (selected by default), Share, Main menu |
-| Top scores | Top 10 table per mode with name (up to 8 characters), score, level and date |
-| Settings | Sound on or off, Vibration on or off, Controls (Swipe, Keypad, Both), Keypad side (left or right handed), Colour theme, Retro screen blur (decorative, off by default), Reset scores (asks for confirmation, default button Cancel, delete button "Delete all scores") |
+| Game over | Score, high score name entry if earned (filled with the last name used, keyboard opens only on tap), Play again (selected by default), Share (includes the challenge code), Main menu |
+| Top scores | Top 10 table per mode and play style with name (up to 8 characters), score, level and date, plus a Share memory lane card button |
+| Medals | All 12 medals, earned ones in full colour, others shown as outlines with how to earn them |
+| Daily challenge | Today's result, streak and the last 30 days |
+| Enter code | 8 character code box with a large keypad style keyboard |
+| About | Version, font licence, privacy policy link and a short "Why no ads" note |
+| Settings | Sound on or off, Vibration on or off, Controls (Swipe, Keypad, Both), Keypad side (left or right handed), Play style (Modern or Purist), Colour theme, Retro screen blur (decorative, off by default), Reset scores (asks for confirmation, default button Cancel, delete button "Delete all scores") |
 | Instructions | Short text and a picture of the controls |
 
 ### 5.2 Menu style
@@ -177,6 +229,9 @@ The game logic has these states and only these transitions.
 * The hint disappears on the first input.
 
 ### 5.5 Share
+
+The Top scores screen offers a memory lane card, shared as text, for example "Snake first came to phones in 1997. My best on The Snake today is 01234."
+
 
 The Share button uses `Share.Default.RequestAsync` with a `ShareTextRequest`, which is part of MAUI. Example text is "I scored 01234 on level 7 in The Snake (Classic, walls off)".
 
@@ -233,6 +288,7 @@ Old phone screens left a faint trail when pixels changed. This option is off by 
 * The game page listens to `SizeChanged` and recalculates cell size, keypad placement and letterboxing.
 * On screens 600 dp wide or more, the keypad is drawn at a fixed comfortable size rather than stretched.
 * Use safe area aware layout so nothing sits under the status bar, navigation bar or camera cutout.
+* On screens 600 dp wide or more, the playfield and keypad are drawn inside a classic handset frame, a generic 1990s style phone drawn with the theme colours. It must not copy the name, logo or design of any real phone. A Settings switch turns the frame off.
 
 ### 7.5 Text size and motion
 
@@ -253,7 +309,7 @@ Old phone screens left a faint trail when pixels changed. This option is off by 
 * Sound and vibration each have their own setting. Both are on by default.
 * Beeps play on the media volume stream so the phone's volume buttons control them.
 * Sound is played through a small `ISoundService` interface. The Android implementation lives in `Platforms/Android/SoundService.cs` and wraps `Android.Media.ToneGenerator`. Other platforms get an empty implementation.
-* Vibration uses MAUI `HapticFeedback` for clicks and `Vibration` for longer buzzes. Add the `VIBRATE` permission to `AndroidManifest.xml`.
+* Vibration uses MAUI `HapticFeedback` for clicks and `Vibration` for longer buzzes. Add the `VIBRATE` permission to `AndroidManifest.xml`. This is the only permission the Release build requests. Remove the internet permission from the Release manifest (it can stay in Debug for Hot Reload and debugging).
 
 ## 9. Architecture
 
@@ -275,6 +331,10 @@ TheSnake.sln
       MazeLoader.cs
       ScoreRules.cs
       IRandomSource.cs
+      SeedRandomSource.cs        Deterministic random numbers from a seed
+      ChallengeCode.cs           Encode and decode the 8 character codes
+      DailySeed.cs               Seed from the local date
+      Medals.cs                  Medal rules
     Rendering/
       GameDrawable.cs            IDrawable that paints the grid
       Sprites.cs                 Critter and font bitmaps as byte arrays
@@ -284,6 +344,8 @@ TheSnake.sln
       IHapticsService.cs
       SettingsService.cs         Wraps Preferences
       HighScoreService.cs        Wraps Preferences (JSON string)
+      MedalService.cs            Wraps Preferences (JSON string)
+      DailyService.cs            Daily results and streak
     ViewModels/
       MenuViewModel.cs
       GameViewModel.cs
@@ -295,6 +357,10 @@ TheSnake.sln
       SettingsPage.xaml
       HighScoresPage.xaml
       InstructionsPage.xaml
+      MedalsPage.xaml
+      DailyPage.xaml
+      EnterCodePage.xaml
+      AboutPage.xaml
     Platforms/Android/
       MainActivity.cs            Key events
       SoundService.cs
@@ -320,12 +386,18 @@ TheSnake.sln
 | Settings | `Preferences` | `settings.sound`, `settings.vibration`, `settings.controls`, `settings.theme`, `settings.ghosting`, `settings.keypadSide` |
 | Last level and mode | `Preferences` | `game.level`, `game.mode`, `game.maze` |
 | Top 10 per mode | `Preferences`, JSON with `System.Text.Json` | `scores.classic`, `scores.walls`, `scores.maze` |
+| Top 10 per play style | `Preferences`, JSON | `scores.<mode>.<style>` |
+| Medals | `Preferences`, JSON | `medals` |
+| Daily results | `Preferences`, JSON | `daily.results`, `daily.streak` |
 | Paused game | `Preferences`, JSON | `game.saved`, cleared when the game ends |
+
+**Backup to a new phone.** MAUI `Preferences` on Android are stored as shared preferences, which Android Auto Backup saves to a private area of the player's Google Drive (up to 25 MB per app, not counted against the player's Drive storage). Keep `android:allowBackup` on and add backup rules files in `Platforms/Android/Resources/xml` (`dataExtractionRules` for Android 12 and later, `fullBackupContent` for older versions) that include the shared preferences but exclude the paused game. To make that possible, the paused game is stored with `Preferences` under its own shared name (`paused`), which Android keeps in its own file, and the rules exclude that file. An old paused game is then never restored on a new phone.
 
 ### 9.4 App lifecycle
 
 * When the window is deactivated or the app is stopped (`Window.Deactivated` or `Window.Stopped`), a running game moves to Paused and is saved.
 * When the app comes back, the pause overlay is shown. The game never restarts by itself.
+* While paused or in menus, the game timer is stopped and the playfield is not redrawn, to save battery. The app sends no notifications.
 * A configuration change such as rotation or a window resize must not lose the game. The state lives in the view model and in the saved JSON, never only in the page.
 
 ## 10. Performance and quality targets
@@ -333,6 +405,7 @@ TheSnake.sln
 | Target | Value |
 |---|---|
 | Cold start to main menu on a mid range Android 17 phone | Under 2 seconds in Release build |
+| Launch to first snake move using the Continue or New game button | Under 3 seconds |
 | Tick timing drift | Under 10 ms on average over one minute at level 9 |
 | Input delay from key press to turn | Next tick at the latest |
 | Memory during play | Under 150 MB |
@@ -357,6 +430,11 @@ TheSnake.sln
 * Critter appears after every 5th food and leaves after 20 ticks
 * Score formulas for food, critters and a full grid
 * Maze files load and rotate correctly for landscape
+* The same seed always gives the same food and critter sequence
+* Challenge codes encode and decode every level, mode and maze, and a code with one wrong character is rejected
+* The daily seed is the same for the same date and different for the next date
+* Each medal rule triggers exactly when its condition is first met
+* Purist style uses a 1 turn queue and caps the score display at 9999
 
 ### 11.2 Manual test matrix
 
@@ -382,6 +460,10 @@ The release is accepted when:
 5. Sending the app to the background and back never loses a game in progress.
 6. No third party packages appear in the project file.
 7. Every decision D1 to D17 in `UIUXAudit.md` is implemented.
+8. Every change S1 to S14 in `MarketStrategy.md` is implemented.
+9. The same challenge code gives the same board on two different phones.
+10. After installing on a second phone with the same Google account, scores, medals and settings come back and no paused game is restored.
+11. The Release AAB requests only the vibration permission.
 
 ## 12. Build and release
 
@@ -390,11 +472,13 @@ The release is accepted when:
 3. For release, switch to the Release configuration, right click the project and choose **Publish**. This opens the Archive Manager.
 4. Create an Android App Bundle (AAB), sign it with the team's keystore through **Distribute**, and upload it to Google Play.
 5. Bump `ApplicationDisplayVersion` and `ApplicationVersion` in the project file for every release.
+6. In Play Console, fill in the Data safety form as "no data collected or shared" and link the privacy policy.
+7. Store listing leads with "No ads. No account. No internet." and uses no Nokia name, logo or real phone design.
 
 ## 13. Future ideas (not in 1.0)
 
 * Two player mode on one tablet
-* Daily challenge maze with a fixed seed
+* Daily challenge in Maze mode
 * Unlockable colour themes for high scores
 * iOS and Windows builds from the same MAUI project
 
