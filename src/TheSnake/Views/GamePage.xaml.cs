@@ -55,6 +55,10 @@ public partial class GamePage : ContentPage
         _fixedSetup = setup;
         _bestKey = bestKey;
         Arena.Drawable = _drawable;
+
+        // Listen to the arena itself, not the page. The page gets its size before its children are
+        // arranged, so at that moment the arena still has no size and the run would never start.
+        Arena.SizeChanged += (_, _) => OnSizeChanged();
         SizeChanged += (_, _) => OnSizeChanged();
     }
 
@@ -70,6 +74,9 @@ public partial class GamePage : ContentPage
         _frameTimer ??= CreateTimer();
         ApplyTheme();
         UpdateRemoveAdsButtons();
+
+        // Safety net in case no size event reaches us after layout.
+        Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(300), OnSizeChanged);
     }
 
     protected override void OnDisappearing()
