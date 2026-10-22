@@ -1,6 +1,6 @@
 # The Snake Build Status
 
-Build 0.1.0 (version code 1), October 2026. Package `com.vishvplus.thesnakegame`.
+Build 0.1.1 (version code 2), October 2026. Package `com.vishvplus.thesnakegame`.
 
 This is the first playable test build of spec 2.0. It is a test build, not a store build.
 
@@ -19,6 +19,8 @@ This is the first playable test build of spec 2.0. It is a test build, not a sto
 
 * The 32 Core unit tests pass. They cover movement, turns, wraparound, walls, collisions, growth, speed, combos, power ups, Retro rules, mazes, seeds, challenge codes and progression.
 * The Release APK builds and was checked with `aapt` and `apksigner`.
+* **0.1.1 fixes the empty arena in 0.1.0.** The game screen waited for its play area to have a size, but it listened to the page's size event, which fires before the play area is measured. No run was ever created, so no snake or food was drawn. It now listens to the play area itself, with a delayed fallback.
+* An Android 9 emulator did boot and 0.1.1 installed on it, but under software emulation Android's own system service kept being restarted by its watchdog, so the app could not be opened there. No crash of The Snake itself was recorded.
 * **The app has not yet been run on a device.** The build machine has no hardware virtualisation, and the software emulator had still not finished booting after an hour. Install the APK on a real phone first and report anything that goes wrong.
 
 ## What is in this build
