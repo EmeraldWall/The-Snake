@@ -163,8 +163,9 @@ public sealed class ProgressionTests
     [TestMethod]
     public void ThemesUnlockByLevel()
     {
-        CollectionAssert.Contains(Progression.UnlockedThemes(1).ToList(), "Neon LCD");
-        CollectionAssert.DoesNotContain(Progression.UnlockedThemes(4).ToList(), "Night");
-        CollectionAssert.Contains(Progression.UnlockedThemes(5).ToList(), "Night");
+        Assert.AreEqual(8, Progression.UnlockedThemes(1).Count(), "eight themes are free from the start");
+        CollectionAssert.Contains(Progression.UnlockedThemes(1).ToList(), "Paper");
+        CollectionAssert.DoesNotContain(Progression.UnlockedThemes(4).ToList(), "Game Boy");
+        CollectionAssert.Contains(Progression.UnlockedThemes(5).ToList(), "Game Boy");
     }
 }

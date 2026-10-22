@@ -15,6 +15,7 @@ public partial class App : Application
 
     protected override Window CreateWindow(IActivationState? activationState)
     {
+        Ui.ThemeManager.ApplySaved();
         var window = new Window(new AppShell());
         window.Deactivated += (_, _) => WentToBackground?.Invoke(this, EventArgs.Empty);
         window.Stopped += (_, _) => WentToBackground?.Invoke(this, EventArgs.Empty);

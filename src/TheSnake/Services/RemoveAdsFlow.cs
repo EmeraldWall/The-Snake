@@ -6,8 +6,7 @@ public static class RemoveAdsFlow
     public static async Task RunAsync()
     {
         var store = ServiceHelper.Get<IStoreService>();
-        var page = Application.Current?.Windows.FirstOrDefault()?.Page;
-        if (store.IsAdFree || page is null)
+        if (store.IsAdFree)
         {
             return;
         }
@@ -24,7 +23,7 @@ public static class RemoveAdsFlow
 
         if (message is not null)
         {
-            await page.DisplayAlertAsync("Remove ads", message, "OK");
+            await Ui.Dialogs.AlertAsync(outcome == PurchaseOutcome.Purchased ? "Thank you!" : "Remove ads", message);
         }
     }
 }

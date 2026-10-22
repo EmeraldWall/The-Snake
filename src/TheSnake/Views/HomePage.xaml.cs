@@ -1,9 +1,10 @@
 using TheSnake.Core;
 using TheSnake.Services;
+using TheSnake.Ui;
 
 namespace TheSnake.Views;
 
-public partial class HomePage : ContentPage
+public partial class HomePage : ContentPage, IHasSheetHost
 {
     private readonly ProgressStore _progress = ServiceHelper.Get<ProgressStore>();
     private readonly AppSettings _settings = ServiceHelper.Get<AppSettings>();
@@ -17,9 +18,12 @@ public partial class HomePage : ContentPage
         _store.EntitlementChanged += (_, _) => Refresh();
     }
 
+    public SheetHost Sheets => SheetLayer;
+
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+        ThemeManager.ApplySaved();
         Refresh();
         if (!_started)
         {
@@ -34,6 +38,8 @@ public partial class HomePage : ContentPage
         }
     }
 
+    protected override bool OnBackButtonPressed() => Sheets.HandleBack() || base.OnBackButtonPressed();
+
     private void Refresh()
     {
         var p = _progress.Progress;
@@ -43,77 +49,80 @@ public partial class HomePage : ContentPage
         int level = Progression.LevelForXp(p.Xp);
         LevelLabel.Text = level >= Progression.MaxLevel ? $"Level {level} (max)" : $"Level {level}";
         XpBar.Progress = Progression.LevelFraction(p.Xp);
-        StreakLabel.Text = p.StreakDays > 0 ? $"Streak {p.StreakDays} day{(p.StreakDays == 1 ? "" : "s")}" : "No streak yet";
+        StreakLabel.Text = p.StreakDays > 0 ? $"{p.StreakDays} day streak" : "Start a streak today";
 
-        DailyButton.Text = Progression.HasPlayedDailyToday(p, today)
-            ? $"Daily Run\nDone: {p.DailyScoreToday:N0}"
-            : "Daily Run\nRanked try ready";
+        DailySub.Text = Progression.HasPlayedDailyToday(p, today) ? $"Done today: {p.DailyScoreToday:N0}" : "Ranked try ready";
         p.Best.TryGetValue("weekly:" + Seeds.WeekKey(today), out int weeklyBest);
-        WeeklyButton.Text = $"Weekly Arena\n{Seeds.WeekKey(today)}  Best {weeklyBest:N0}";
-        var variant = (RetroVariant)_settings.RetroVariant;
-        RetroButton.Text = $"Retro 97\n{Arenas.RetroName(variant)}, level {_settings.RetroLevel}";
+        WeeklySub.Text = weeklyBest > 0 ? $"Best this week {weeklyBest:N0}" : "New board every week";
+        RetroSub.Text = $"{Arenas.RetroName((RetroVariant)_settings.RetroVariant)}, level {_settings.RetroLevel}";
 
         MissionsList.Children.Clear();
         foreach (var m in p.Missions)
         {
-            MissionsList.Children.Add(new Label
-            {
-                Text = $"{(m.Done ? "Done" : $"{m.Progress}/{m.Target}")}   {m.Text}   +{m.RewardXp} XP",
-                TextColor = m.Done ? Color.FromArgb("#39FF88") : Color.FromArgb("#C9E8D6"),
-                FontSize = 14,
-            });
+            var row = new Grid { ColumnDefinitions = { new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto) }, ColumnSpacing = 8 };
+            var text = new Label { Text = m.Text, FontSize = 15 };
+            text.SetDynamicResource(Label.TextColorProperty, m.Done ? "Accent" : "Text");
+            var state = new Label { Text = m.Done ? "Done" : $"{m.Progress}/{m.Target}  +{m.RewardXp} XP", FontSize = 13, VerticalOptions = LayoutOptions.Center };
+            state.SetDynamicResource(Label.TextColorProperty, m.Done ? "Accent" : "Muted");
+            row.Add(text);
+            row.Add(state, 1);
+            MissionsList.Children.Add(row);
         }
 
         p.Best.TryGetValue("endless", out int endless);
         p.Best.TryGetValue("daily", out int daily);
-        BestLabel.Text = $"Endless {endless:N0}    Daily {daily:N0}    Runs played {p.TotalRuns:N0}";
+        BestLabel.Text = $"Endless {endless:N0}   .   Daily {daily:N0}   .   {p.TotalRuns:N0} runs";
 
         RemoveAdsButton.IsVisible = !_store.IsAdFree;
         RemoveAdsButton.Text = _store.RemoveAdsPrice is { } price ? $"Remove ads {price}" : "Remove ads";
     }
 
-    private Task Start(GameSetup? setup, string bestKey) =>
-        Navigation.PushAsync(new GamePage(setup, bestKey));
+    private Task Start(GameSetup? setup, string bestKey) => Navigation.PushAsync(new GamePage(setup, bestKey), animated: false);
 
     private void OnPlay(object? sender, EventArgs e) => _ = Start(null, "endless");
 
-    private void OnDaily(object? sender, EventArgs e) => _ = Start(Arenas.DailyRun(Seeds.TodayUtc()), "daily");
+    private void OnDaily(object? sender, TappedEventArgs e) => _ = Start(Arenas.DailyRun(Seeds.TodayUtc()), "daily");
 
-    private void OnWeekly(object? sender, EventArgs e)
+    private void OnWeekly(object? sender, TappedEventArgs e)
     {
         var today = Seeds.TodayUtc();
         _ = Start(Arenas.WeeklyArena(today), "weekly:" + Seeds.WeekKey(today));
     }
 
-    private async void OnRetro(object? sender, EventArgs e)
+    private async void OnRetro(object? sender, TappedEventArgs e)
     {
-        var names = Enum.GetValues<RetroVariant>().Select(Arenas.RetroName).ToArray();
-        string? choice = await DisplayActionSheetAsync("Retro 97 mode", "Cancel", null, names);
-        int index = Array.IndexOf(names, choice);
-        if (index < 0)
+        int variant = _settings.RetroVariant;
+        int level = _settings.RetroLevel;
+        bool purist = _settings.Purist;
+        var names = Enum.GetValues<RetroVariant>().Select(Arenas.RetroName).ToList();
+
+        bool play = await Sheets.ShowAsync<bool>("Retro 97", "The 1997 phone rules: fixed speed, critters and mazes.", h =>
+        [
+            Kit.Section("Board"),
+            Kit.ChipGroup(names, variant, i => variant = i),
+            Kit.Section("Speed"),
+            Kit.ChipGroup(Enumerable.Range(1, 9).Select(l => l.ToString()).ToList(), level - 1, i => level = i + 1),
+            Kit.Section("Style"),
+            Kit.ChipGroup(["Classic", "Purist"], purist ? 1 : 0, i => purist = i == 1),
+            Kit.Primary("Play", (_, _) => h.Close(true)),
+        ]);
+
+        if (!play)
         {
             return;
         }
 
-        var levels = Enumerable.Range(1, 9).Select(l => $"Level {l}").ToArray();
-        string? levelChoice = await DisplayActionSheetAsync("Speed level", "Cancel", null, levels);
-        int level = Array.IndexOf(levels, levelChoice) + 1;
-        if (level < 1)
-        {
-            return;
-        }
-
-        _settings.RetroVariant = index;
+        _settings.RetroVariant = variant;
         _settings.RetroLevel = level;
-        var variant = (RetroVariant)index;
+        _settings.Purist = purist;
+        var v = (RetroVariant)variant;
         var seed = (uint)Random.Shared.Next() & Seeds.SeedMask;
-        await Start(Arenas.Retro(seed, level, variant, _settings.Purist), $"retro:{variant}:{level}:{(_settings.Purist ? "purist" : "classic")}");
+        await Start(Arenas.Retro(seed, level, v, purist), $"retro:{v}:{level}:{(purist ? "purist" : "classic")}");
     }
 
-    private async void OnChallenge(object? sender, EventArgs e)
+    private async void OnChallenge(object? sender, TappedEventArgs e)
     {
-        string? code = await DisplayPromptAsync("Challenge code", "Type the 8 character code your friend shared.",
-            "Play", "Cancel", "K7Q2M9XA", maxLength: 10, keyboard: Keyboard.Text);
+        string? code = await Dialogs.PromptAsync("Challenge code", "Type the 8 character code your friend shared.", "K7Q2M9XA", "Play", maxLength: 10);
         if (code is null)
         {
             return;
@@ -121,14 +130,14 @@ public partial class HomePage : ContentPage
 
         if (!ChallengeCode.TryDecode(code, out var setup))
         {
-            await DisplayAlertAsync("Challenge code", "That code does not look right. Check the letters and try again.", "OK");
+            await Dialogs.AlertAsync("Code not found", "That code does not look right. Check the letters and try again.");
             return;
         }
 
         await Start(setup, "challenge:" + ChallengeCode.Encode(setup));
     }
 
-    private void OnSettings(object? sender, EventArgs e) => _ = Navigation.PushAsync(new SettingsPage());
+    private void OnSettings(object? sender, EventArgs e) => _ = Navigation.PushAsync(new SettingsPage(), animated: false);
 
     private async void OnRemoveAds(object? sender, EventArgs e)
     {

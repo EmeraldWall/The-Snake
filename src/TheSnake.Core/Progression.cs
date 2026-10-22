@@ -78,8 +78,11 @@ public static class Progression
     /// <summary>Themes and the player level that unlocks each one. All earned by playing, never sold.</summary>
     public static readonly IReadOnlyList<(string Theme, int Level)> ThemeUnlocks =
     [
-        ("Neon LCD", 1), ("Classic LCD", 1), ("Blue Backlight", 3), ("Night", 5), ("Sunset", 8),
-        ("Ocean", 12), ("Candy", 16), ("Mono", 20), ("Ember", 25), ("Aurora", 30),
+        // Eight themes are free from the start so nobody feels boxed in. The rest are earned by playing.
+        ("Neon LCD", 1), ("Ocean", 1), ("Sunset", 1), ("Paper", 1), ("Mono", 1),
+        ("Classic LCD", 1), ("Blue Backlight", 1), ("Night", 1),
+        ("Forest", 2), ("Candy", 3), ("Midnight", 4), ("Game Boy", 5), ("Ice", 6),
+        ("Ember", 8), ("Cyber", 10), ("Amber CRT", 12), ("Aurora", 15), ("Lava", 20),
     ];
 
     /// <summary>XP needed to go from level n to n + 1. Each level needs 10 percent more.</summary>

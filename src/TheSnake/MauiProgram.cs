@@ -33,7 +33,9 @@ public static class MauiProgram
         builder.Services.AddSingleton<ISoundService, AndroidSoundService>();
         builder.Services.AddSingleton<IAdService, AdMobService>();
         builder.Services.AddSingleton<IStoreService, PlayBillingService>();
+        builder.Services.AddTransient<IFrameTicker, ChoreographerTicker>();
 #else
+        builder.Services.AddTransient<IFrameTicker, TimerFrameTicker>();
         builder.Services.AddSingleton<ISoundService, SilentSoundService>();
         builder.Services.AddSingleton<IAdService, NoAdService>();
 #endif

@@ -1,14 +1,14 @@
-using System.Diagnostics;
 using TheSnake.Core;
 using TheSnake.Rendering;
 using TheSnake.Services;
+using TheSnake.Ui;
 #if ANDROID
 using TheSnake.Platforms.Android;
 #endif
 
 namespace TheSnake.Views;
 
-public partial class GamePage : ContentPage
+public partial class GamePage : ContentPage, IHasSheetHost
 {
     private enum State
     {
@@ -21,9 +21,16 @@ public partial class GamePage : ContentPage
         Over,
     }
 
-    private const double SwipeDistance = 24;
+    /// <summary>A swipe counts after this many dp. Small, so turns register early in the gesture.</summary>
+    private const double SwipeDistance = 14;
     private const double EdgeDeadZone = 24;
     private const int DeathEffectMs = 600;
+
+    /// <summary>
+    /// If a turn arrives once the head is at least this far into its next cell, that move is finished
+    /// at once and the turn starts straight away, instead of waiting for the next tick.
+    /// </summary>
+    private const double CommitMoveAt = 0.45;
 
     private static bool s_offeredRemoveAdsThisSession;
     private static double s_sessionPlayMs;
@@ -35,19 +42,17 @@ public partial class GamePage : ContentPage
     private readonly ProgressStore _progress = ServiceHelper.Get<ProgressStore>();
     private readonly Feedback _feedback = ServiceHelper.Get<Feedback>();
     private readonly IStoreService _store = ServiceHelper.Get<IStoreService>();
+    private readonly IFrameTicker _ticker = ServiceHelper.Get<IFrameTicker>();
     private readonly GameDrawable _drawable = new();
-    private readonly Stopwatch _clock = new();
-    private IDispatcherTimer? _frameTimer;
     private GameEngine? _engine;
     private State _state = State.WaitingForSize;
     private double _accumulatorMs;
-    private double _lastFrameMs;
+    private double _lastFrameMs = -1;
     private double _stateMs;
     private int _countdown;
-    private int _toastMs;
+    private double _toastMs;
     private PointF? _swipeAnchor;
     private bool _swipeBlocked;
-    private bool _swipeMoved;
 
     public GamePage(GameSetup? setup, string bestKey)
     {
@@ -62,6 +67,8 @@ public partial class GamePage : ContentPage
         SizeChanged += (_, _) => OnSizeChanged();
     }
 
+    public SheetHost Sheets => SheetLayer;
+
     private bool IsRetro => _engine?.Setup.Rules == RuleSet.Retro || _fixedSetup?.Rules == RuleSet.Retro;
 
     protected override void OnAppearing()
@@ -71,8 +78,7 @@ public partial class GamePage : ContentPage
 #if ANDROID
         KeyInput.Handler = OnKey;
 #endif
-        _frameTimer ??= CreateTimer();
-        ApplyTheme();
+        ApplyLook();
         UpdateRemoveAdsButtons();
 
         // Safety net in case no size event reaches us after layout.
@@ -86,11 +92,16 @@ public partial class GamePage : ContentPage
 #if ANDROID
         KeyInput.Handler = null;
 #endif
-        _frameTimer?.Stop();
+        _ticker.Stop();
     }
 
     protected override bool OnBackButtonPressed()
     {
+        if (Sheets.HandleBack())
+        {
+            return true;
+        }
+
         if (_state is State.Running or State.Countdown)
         {
             Pause();
@@ -100,26 +111,14 @@ public partial class GamePage : ContentPage
         return base.OnBackButtonPressed();
     }
 
-    private IDispatcherTimer CreateTimer()
+    private void ApplyLook()
     {
-        var timer = Dispatcher.CreateTimer();
-        timer.Interval = TimeSpan.FromMilliseconds(16);
-        timer.IsRepeating = true;
-        timer.Tick += (_, _) => OnFrame();
-        return timer;
-    }
-
-    private void ApplyTheme()
-    {
-        var theme = Theme.Get(IsRetro ? _settings.RetroTheme : _settings.Theme);
-        _drawable.Theme = theme;
+        _drawable.Theme = Theme.Get(IsRetro ? _settings.RetroTheme : _settings.Theme);
+        _drawable.Look = _settings.Look;
         _drawable.ReduceMotion = _settings.ReduceMotion;
-        BackgroundColor = theme.Background;
-        ScoreLabel.TextColor = theme.Text;
         DPad.IsVisible = _settings.Controls == ControlScheme.DPad;
-        bool modern = !IsRetro;
-        ComboLabel.IsVisible = modern;
-        ComboBar.IsVisible = modern;
+        ComboRow.IsVisible = !IsRetro;
+        Arena.Invalidate();
     }
 
     private void OnSizeChanged()
@@ -139,10 +138,7 @@ public partial class GamePage : ContentPage
         if (landscape != _drawable.Landscape)
         {
             _drawable.Landscape = landscape;
-            if (_state is State.Running or State.Countdown)
-            {
-                Pause();
-            }
+            Pause();
         }
 
         CheckDPadFits();
@@ -156,11 +152,12 @@ public partial class GamePage : ContentPage
         _engine = new GameEngine(setup);
         _drawable.Engine = _engine;
         _drawable.DeathProgress = 0;
-        _drawable.Interpolation = 1;
+        _drawable.Interpolation = 0;
         _accumulatorMs = 0;
         PausePanel.IsVisible = false;
         OverPanel.IsVisible = false;
         CountdownLabel.IsVisible = false;
+        OverTitle.Text = "Game over";
         _progress.Progress.Best.TryGetValue(_bestKey, out int best);
         BestLabel.Text = $"Best {best:N0}";
         CheckDPadFits();
@@ -198,7 +195,7 @@ public partial class GamePage : ContentPage
         if (cell < 10 && DPad.IsVisible)
         {
             DPad.IsVisible = false;
-            ShowToast("Turn the phone sideways or use swipes, the D pad needs more room", 2500);
+            ShowToast("Not enough room for the D pad. Swipe instead", 2500);
         }
     }
 
@@ -206,14 +203,14 @@ public partial class GamePage : ContentPage
     {
         string how = _settings.Controls switch
         {
-            ControlScheme.ThumbTurns => "Tap the left or right half to turn",
+            ControlScheme.ThumbTurns => "Tap left or right to turn",
             ControlScheme.DPad => "Press an arrow to start",
             _ => "Swipe to start",
         };
 
         if (!_settings.SeenFirstRunHint)
         {
-            how += "\nEat food, chain combos, avoid your tail.\nPause any time with II or the back gesture.";
+            how += "\nEat, chain combos, dodge your tail.\nPause any time with II or Back.";
         }
 
         if (_settings.Controls == ControlScheme.Swipe && !_settings.SeenEdgeSwipeTip)
@@ -223,47 +220,49 @@ public partial class GamePage : ContentPage
         }
 
         HintLabel.Text = how;
-        HintLabel.IsVisible = true;
+        HintCard.IsVisible = true;
     }
 
     private void SetState(State state)
     {
         _state = state;
         _stateMs = 0;
-        bool animate = state is State.Running or State.Countdown or State.Dying || _toastMs > 0;
-        if (animate)
+        if (state is State.Running or State.Countdown or State.Dying || _toastMs > 0)
         {
-            _clock.Restart();
-            _lastFrameMs = 0;
-            _frameTimer?.Start();
+            StartTicker();
         }
         else
         {
             // Nothing moves while paused or in menus, so stop drawing to save battery.
-            _frameTimer?.Stop();
+            _ticker.Stop();
         }
     }
 
-    private void OnFrame()
+    private void StartTicker()
+    {
+        _lastFrameMs = -1;
+        _ticker.Start(OnFrame);
+    }
+
+    private void OnFrame(double nowMs)
     {
         if (_engine is null)
         {
             return;
         }
 
-        double now = _clock.Elapsed.TotalMilliseconds;
-        double dt = Math.Min(100, now - _lastFrameMs);
-        _lastFrameMs = now;
+        double dt = _lastFrameMs < 0 ? 0 : Math.Clamp(nowMs - _lastFrameMs, 0, 100);
+        _lastFrameMs = nowMs;
         _stateMs += dt;
         _drawable.ClockMs += dt;
         _drawable.Advance((float)dt);
 
         if (_toastMs > 0)
         {
-            _toastMs -= (int)dt;
+            _toastMs -= dt;
             if (_toastMs <= 0)
             {
-                ToastLabel.IsVisible = false;
+                Toast.IsVisible = false;
             }
         }
 
@@ -278,7 +277,7 @@ public partial class GamePage : ContentPage
                     HandleEvents(_engine.Tick());
                 }
 
-                _drawable.Interpolation = _state == State.Running ? (float)(_accumulatorMs / _engine.TickLengthMs) : 1;
+                _drawable.Interpolation = (float)(_accumulatorMs / _engine.TickLengthMs);
                 UpdateHud();
                 break;
 
@@ -310,7 +309,7 @@ public partial class GamePage : ContentPage
             default:
                 if (_toastMs <= 0)
                 {
-                    _frameTimer?.Stop();
+                    _ticker.Stop();
                 }
 
                 break;
@@ -358,15 +357,7 @@ public partial class GamePage : ContentPage
         {
             _feedback.Play(Sfx.PowerUp);
             _feedback.Buzz(20);
-            string name = _engine.ActivePower?.Kind switch
-            {
-                PowerUpKind.SlowTime => "Slow time",
-                PowerUpKind.Phase => "Phase",
-                PowerUpKind.Magnet => "Magnet",
-                PowerUpKind.Double => "Double points",
-                _ => "Trim",
-            };
-            ShowToast(name, 800);
+            ShowToast(_engine.ActivePower is { } p ? PowerName(p.Kind) : "Trim", 800);
         }
 
         if (events.HasFlag(TickEvents.CritterSpawned))
@@ -384,16 +375,24 @@ public partial class GamePage : ContentPage
         {
             _feedback.Play(Sfx.Death);
             _feedback.Buzz(300);
-            _drawable.Interpolation = 1;
             SetState(State.Dying);
         }
         else if (events.HasFlag(TickEvents.Won))
         {
             _feedback.Play(Sfx.LevelUp);
-            OverTitle.Text = "Well done!";
             ShowGameOver();
+            OverTitle.Text = "Well done!";
         }
     }
+
+    private static string PowerName(PowerUpKind kind) => kind switch
+    {
+        PowerUpKind.SlowTime => "Slow time",
+        PowerUpKind.Phase => "Phase",
+        PowerUpKind.Magnet => "Magnet",
+        PowerUpKind.Double => "Double points",
+        _ => "Trim",
+    };
 
     private void UpdateHud()
     {
@@ -409,13 +408,7 @@ public partial class GamePage : ContentPage
         if (_engine.ActivePower is { } power)
         {
             PowerRow.IsVisible = true;
-            PowerLabel.Text = power.Kind switch
-            {
-                PowerUpKind.SlowTime => "Slow time",
-                PowerUpKind.Phase => "Phase",
-                PowerUpKind.Magnet => "Magnet",
-                _ => "Double",
-            };
+            PowerLabel.Text = PowerName(power.Kind);
             PowerBar.Progress = (double)power.RemainingMs / power.TotalMs;
         }
         else if (_engine.Critter is { } critter)
@@ -433,58 +426,80 @@ public partial class GamePage : ContentPage
     private void ShowToast(string text, int ms)
     {
         ToastLabel.Text = text;
-        ToastLabel.IsVisible = true;
+        Toast.IsVisible = true;
         _toastMs = ms;
-        if (_frameTimer is { IsRunning: false })
+        if (!_ticker.IsRunning)
         {
-            _clock.Restart();
-            _lastFrameMs = 0;
-            _frameTimer.Start();
+            StartTicker();
         }
     }
 
-    private void Steer(Direction screenDirection)
+    /// <summary>
+    /// Applies a turn as fast as possible. The renderer already shows the snake moving into its next
+    /// cell, so a queued turn is visible on the next frame. If the head is already most of the way
+    /// into that cell, the move is finished now and the turn begins immediately.
+    /// </summary>
+    private void ApplyTurn(Direction direction)
     {
         if (_engine is null)
         {
             return;
         }
 
-        var direction = _drawable.Landscape ? screenDirection.FromLandscapeScreen() : screenDirection;
         if (_state == State.Ready)
         {
             StartRunning();
         }
 
-        if (_state is State.Running or State.Countdown)
-        {
-            _engine.QueueTurn(direction);
-        }
-        else if (_state == State.Paused && IsRetro && _settings.Purist)
+        if (_state == State.Paused && IsRetro && _settings.Purist)
         {
             // Purist resumes on the first direction, with no countdown.
-            _engine.QueueTurn(direction);
             PausePanel.IsVisible = false;
             SetState(State.Running);
         }
+
+        if (_state is not (State.Running or State.Countdown))
+        {
+            return;
+        }
+
+        bool isRealTurn = direction != _engine.Heading && direction != _engine.Heading.Opposite();
+        if (_state == State.Running && _engine.TurnQueueEmpty && isRealTurn
+            && _accumulatorMs >= _engine.TickLengthMs * CommitMoveAt)
+        {
+            _accumulatorMs = 0;
+            HandleEvents(_engine.Tick());
+            if (_state != State.Running)
+            {
+                Arena.Invalidate();
+                return;
+            }
+        }
+
+        if (_engine.QueueTurn(direction))
+        {
+            _drawable.Interpolation = (float)(_accumulatorMs / _engine.TickLengthMs);
+            Arena.Invalidate();
+        }
     }
+
+    private void Steer(Direction screenDirection) =>
+        ApplyTurn(_drawable.Landscape ? screenDirection.FromLandscapeScreen() : screenDirection);
 
     private void TurnRelative(bool right)
     {
-        if (_state == State.Ready)
+        if (_engine is null)
         {
-            StartRunning();
+            return;
         }
 
-        if (_state is State.Running or State.Countdown)
-        {
-            _engine?.QueueRelativeTurn(right);
-        }
+        var basis = _engine.TurnQueueEmpty ? _engine.Heading : _engine.NextHeading;
+        ApplyTurn(right ? basis.TurnRight() : basis.TurnLeft());
     }
 
     private void StartRunning()
     {
-        HintLabel.IsVisible = false;
+        HintCard.IsVisible = false;
         _settings.SeenFirstRunHint = true;
         _accumulatorMs = 0;
         SetState(State.Running);
@@ -499,7 +514,6 @@ public partial class GamePage : ContentPage
 
         CountdownLabel.IsVisible = false;
         PausePanel.IsVisible = true;
-        _drawable.Interpolation = 1;
         UpdateRemoveAdsButtons();
         SetState(State.Paused);
         Arena.Invalidate();
@@ -539,16 +553,12 @@ public partial class GamePage : ContentPage
         SetState(State.Countdown);
     }
 
-    private void OnRestart(object? sender, EventArgs e)
-    {
-        OverTitle.Text = "Game over";
-        NewGame();
-    }
+    private void OnRestart(object? sender, EventArgs e) => NewGame();
 
     private async void OnHome(object? sender, EventArgs e)
     {
-        _frameTimer?.Stop();
-        await Navigation.PopAsync();
+        _ticker.Stop();
+        await Navigation.PopAsync(animated: false);
     }
 
     private async void OnRemoveAds(object? sender, EventArgs e)
@@ -603,7 +613,7 @@ public partial class GamePage : ContentPage
             _feedback.Play(Sfx.LevelUp);
         }
 
-        lines.AddRange(reward.Unlocked.Select(t => $"Unlocked theme: {t}"));
+        lines.AddRange(reward.Unlocked.Select(t => $"New theme unlocked: {t}"));
         lines.AddRange(reward.MissionsCompleted.Select(m => $"Mission done: {m.Text}"));
         if (_engine.Setup.Mode == GameMode.DailyRun)
         {
@@ -611,22 +621,22 @@ public partial class GamePage : ContentPage
         }
 
         OverDetails.Text = string.Join("\n", lines);
-        OverCode.Text = CanShareCode(_engine.Setup) ? $"Challenge code  {ChallengeCode.Encode(_engine.Setup)}" : "";
-        OverCode.IsVisible = OverCode.Text.Length > 0;
+        bool code = CanShareCode(_engine.Setup);
+        CodeCard.IsVisible = code;
+        OverCode.Text = code ? $"CODE  {ChallengeCode.Encode(_engine.Setup)}" : "";
 
         bool offer = !_store.IsAdFree && !s_offeredRemoveAdsThisSession;
         OverRemoveAds.IsVisible = offer;
         s_offeredRemoveAdsThisSession |= offer;
 
         OverPanel.IsVisible = true;
-        PlayAgainButton.Focus();
         SetState(State.Over);
         BestLabel.Text = $"Best {Math.Max(reward.PreviousBest, _engine.Score):N0}";
 
         if (_settings.BreakReminderMinutes > 0 && !s_breakShown && s_sessionPlayMs > _settings.BreakReminderMinutes * 60_000)
         {
             s_breakShown = true;
-            _ = DisplayAlertAsync("Take a break?", $"You have played for over {_settings.BreakReminderMinutes} minutes. Your progress is saved.", "OK");
+            _ = Dialogs.AlertAsync("Time for a break?", $"You have played for over {_settings.BreakReminderMinutes} minutes. Your progress is saved.", "Got it");
         }
     }
 
@@ -644,12 +654,17 @@ public partial class GamePage : ContentPage
 
     // Touch input. Swipes and thumb taps start only inside the arena and away from the side edges and
     // the bottom 24 dp, so they never clash with the back gesture or the ad strip (spec 6.1 and 9.1).
+    // Everything reacts on touch down or during the drag, never on release.
     private void OnTouchStart(object? sender, TouchEventArgs e)
     {
         var p = e.Touches.FirstOrDefault();
-        _swipeMoved = false;
         _swipeBlocked = p.X < EdgeDeadZone || p.X > Arena.Width - EdgeDeadZone || p.Y > Arena.Height - EdgeDeadZone;
         _swipeAnchor = _swipeBlocked ? null : p;
+
+        if (!_swipeBlocked && _settings.Controls == ControlScheme.ThumbTurns)
+        {
+            TurnRelative(p.X > Arena.Width / 2);
+        }
     }
 
     private void OnTouchMove(object? sender, TouchEventArgs e)
@@ -667,24 +682,11 @@ public partial class GamePage : ContentPage
             return;
         }
 
-        _swipeMoved = true;
         Steer(Math.Abs(dx) > Math.Abs(dy) ? (dx > 0 ? Direction.Right : Direction.Left) : (dy > 0 ? Direction.Down : Direction.Up));
         _swipeAnchor = p;
     }
 
-    private void OnTouchEnd(object? sender, TouchEventArgs e)
-    {
-        if (_swipeBlocked || _swipeMoved)
-        {
-            return;
-        }
-
-        var p = e.Touches.FirstOrDefault();
-        if (_settings.Controls == ControlScheme.ThumbTurns)
-        {
-            TurnRelative(p.X > Arena.Width / 2);
-        }
-    }
+    private void OnTouchEnd(object? sender, TouchEventArgs e) => _swipeAnchor = null;
 
     private void OnPadUp(object? sender, EventArgs e) => PadPress(Direction.Up);
 
@@ -703,6 +705,11 @@ public partial class GamePage : ContentPage
 #if ANDROID
     private bool OnKey(GameKey key)
     {
+        if (Sheets.IsOpen)
+        {
+            return false;
+        }
+
         switch (key)
         {
             case GameKey.Up: Steer(Direction.Up); return true;

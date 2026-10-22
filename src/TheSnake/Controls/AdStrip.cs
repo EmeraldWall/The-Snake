@@ -20,13 +20,14 @@ public sealed class AdStrip : ContentView
         _house = new Label
         {
             Text = "THE SNAKE",
-            TextColor = Color.FromArgb("#5F8F72"),
             FontSize = 14,
             CharacterSpacing = 4,
             HorizontalOptions = LayoutOptions.Center,
             VerticalOptions = LayoutOptions.Center,
         };
-        _root = new Grid { BackgroundColor = Color.FromArgb("#08100C") };
+        _house.SetDynamicResource(Label.TextColorProperty, "Muted");
+        _root = new Grid();
+        _root.SetDynamicResource(BackgroundColorProperty, "Surface");
         _root.Add(_house);
         Content = _root;
 

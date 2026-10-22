@@ -76,6 +76,40 @@ public sealed class GameEngine
 
     public Direction Heading { get; private set; }
 
+    /// <summary>The direction of the next move: the first queued turn, or the current heading.</summary>
+    public Direction NextHeading => _turns.Count > 0 ? _turns.Peek() : Heading;
+
+    /// <summary>True when no turn is waiting to be applied.</summary>
+    public bool TurnQueueEmpty => _turns.Count == 0;
+
+    /// <summary>
+    /// Where the head will go on the next tick, or null if that move would hit a wall, an obstacle or the body.
+    /// Lets the renderer draw the snake moving into its next cell instead of lagging a tick behind.
+    /// </summary>
+    public GridPoint? PredictNextCell(out bool grows)
+    {
+        grows = false;
+        var next = Head.Step(NextHeading);
+        if (!InBounds(next))
+        {
+            return null; // Wrapping or a wall: the renderer does not slide across the edge.
+        }
+
+        if (IsObstacle(next))
+        {
+            return null;
+        }
+
+        grows = next == Food || next == Golden;
+        bool tailLeaves = !grows && next == _snake[^1] && _occupied[next.X, next.Y] == 1;
+        if (_occupied[next.X, next.Y] > 0 && !tailLeaves && ActivePower?.Kind != PowerUpKind.Phase)
+        {
+            return null;
+        }
+
+        return next;
+    }
+
     public GridPoint Food { get; private set; }
 
     public GridPoint? Golden { get; private set; }

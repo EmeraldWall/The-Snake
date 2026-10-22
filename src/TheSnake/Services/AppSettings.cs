@@ -42,6 +42,50 @@ public sealed class AppSettings
         set => _prefs.Set("settings.retroTheme", value);
     }
 
+    public string SnakeColor
+    {
+        get => _prefs.Get("look.snakeColor", "");
+        set => _prefs.Set("look.snakeColor", value);
+    }
+
+    public int Skin
+    {
+        get => _prefs.Get("look.skin", 0);
+        set => _prefs.Set("look.skin", value);
+    }
+
+    public int Shape
+    {
+        get => _prefs.Get("look.shape", 0);
+        set => _prefs.Set("look.shape", value);
+    }
+
+    public int Grid
+    {
+        get => _prefs.Get("look.grid", 0);
+        set => _prefs.Set("look.grid", value);
+    }
+
+    public int Food
+    {
+        get => _prefs.Get("look.food", 0);
+        set => _prefs.Set("look.food", value);
+    }
+
+    public bool Glow
+    {
+        get => _prefs.Get("look.glow", true);
+        set => _prefs.Set("look.glow", value);
+    }
+
+    public Rendering.Look Look => new(
+        string.IsNullOrEmpty(SnakeColor) ? null : Color.FromArgb(SnakeColor),
+        (Rendering.SkinPattern)Skin,
+        (Rendering.BodyShape)Shape,
+        (Rendering.GridStyle)Grid,
+        (Rendering.FoodStyle)Food,
+        Glow);
+
     public bool ReduceMotion
     {
         get => _prefs.Get("settings.reduceMotion", false);

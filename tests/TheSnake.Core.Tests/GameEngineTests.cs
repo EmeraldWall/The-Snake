@@ -53,6 +53,25 @@ public sealed class GameEngineTests
     }
 
     [TestMethod]
+    public void PredictsTheNextCellIncludingAQueuedTurn()
+    {
+        var engine = Modern();
+        Assert.AreEqual(new GridPoint(13, 18), engine.PredictNextCell(out _));
+        engine.QueueTurn(Direction.Up);
+        Assert.AreEqual(Direction.Up, engine.NextHeading);
+        Assert.AreEqual(new GridPoint(12, 17), engine.PredictNextCell(out _));
+    }
+
+    [TestMethod]
+    public void PredictionIsNullAtAWall()
+    {
+        var engine = Modern(wrap: false, width: 10, height: 10);
+        for (int i = 0; i < 4; i++) engine.Tick();
+        Assert.AreEqual(9, engine.Head.X);
+        Assert.IsNull(engine.PredictNextCell(out _));
+    }
+
+    [TestMethod]
     public void TwoQueuedTurnsApplyOverTwoTicks()
     {
         var engine = Modern();
