@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="TheSnake.Views.GamePage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:TheSnake.Controls"
+    x:Name="Root"
+    BackgroundColor="#0B1410"
+    Shell.NavBarIsVisible="False">
+
+    <ContentPage.Resources>
+        <Style x:Key="OverlayButton" TargetType="Button">
+            <Setter Property="BackgroundColor" Value="#16281F" />
+            <Setter Property="TextColor" Value="#E8FFF1" />
+            <Setter Property="FontFamily" Value="OpenSansSemibold" />
+            <Setter Property="FontSize" Value="17" />
+            <Setter Property="CornerRadius" Value="14" />
+            <Setter Property="MinimumHeightRequest" Value="52" />
+        </Style>
+        <Style x:Key="PadButton" TargetType="Button">
+            <Setter Property="BackgroundColor" Value="#16281F" />
+            <Setter Property="TextColor" Value="#39FF88" />
+            <Setter Property="FontSize" Value="22" />
+            <Setter Property="CornerRadius" Value="14" />
+            <Setter Property="WidthRequest" Value="60" />
+            <Setter Property="HeightRequest" Value="60" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+    </ContentPage.Resources>
+
+    <!-- Rows: HUD, arena, D pad, 24 dp gap with divider, ad strip (spec 9.1). -->
+    <Grid RowDefinitions="Auto,*,Auto,Auto,Auto">
+
+        <Grid x:Name="Hud" Padding="16,8,8,4" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+            <VerticalStackLayout VerticalOptions="Center">
+                <Label x:Name="ScoreLabel" Text="0" FontFamily="OpenSansSemibold" FontSize="26" TextColor="#E8FFF1" />
+                <Label x:Name="BestLabel" FontSize="12" TextColor="#9CC9AE" />
+            </VerticalStackLayout>
+            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="3">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                    <Label x:Name="ComboLabel" Text="x1" FontFamily="OpenSansSemibold" FontSize="16" TextColor="#FFD23F" WidthRequest="34" />
+                    <ProgressBar x:Name="ComboBar" Grid.Column="1" ProgressColor="#FFD23F" BackgroundColor="#1F3A2B" VerticalOptions="Center" />
+                </Grid>
+                <Grid x:Name="PowerRow" ColumnDefinitions="Auto,*" ColumnSpacing="8" IsVisible="False">
+                    <Label x:Name="PowerLabel" FontSize="12" TextColor="#5CC8FF" WidthRequest="70" />
+                    <ProgressBar x:Name="PowerBar" Grid.Column="1" ProgressColor="#5CC8FF" BackgroundColor="#1F3A2B" VerticalOptions="Center" />
+                </Grid>
+            </VerticalStackLayout>
+            <Button
+                Grid.Column="2"
+                Text="II"
+                FontFamily="OpenSansSemibold"
+                FontSize="18"
+                WidthRequest="48"
+                HeightRequest="48"
+                CornerRadius="24"
+                Padding="0"
+                BackgroundColor="#16281F"
+                TextColor="#E8FFF1"
+                Clicked="OnPauseClicked"
+                SemanticProperties.Description="Pause" />
+        </Grid>
+
+        <Grid Grid.Row="1" Padding="8,0">
+            <GraphicsView
+                x:Name="Arena"
+                StartInteraction="OnTouchStart"
+                DragInteraction="OnTouchMove"
+                EndInteraction="OnTouchEnd" />
+
+            <Label
+                x:Name="HintLabel"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                Margin="0,140,0,0"
+                Padding="16,10"
+                BackgroundColor="#CC0B1410"
+                TextColor="#E8FFF1"
+                FontSize="17"
+                HorizontalTextAlignment="Center"
+                InputTransparent="True" />
+
+            <Label
+                x:Name="ToastLabel"
+                HorizontalOptions="Center"
+                VerticalOptions="Start"
+                Margin="0,24,0,0"
+                TextColor="#FFD23F"
+                FontFamily="OpenSansSemibold"
+                FontSize="22"
+                InputTransparent="True"
+                IsVisible="False" />
+
+            <Label
+                x:Name="CountdownLabel"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                FontFamily="OpenSansSemibold"
+                FontSize="72"
+                TextColor="#E8FFF1"
+                InputTransparent="True"
+                IsVisible="False" />
+
+            <Border
+                x:Name="PausePanel"
+                IsVisible="False"
+                BackgroundColor="#EE0B1410"
+                StrokeThickness="0"
+                Padding="24">
+                <VerticalStackLayout VerticalOptions="Center" Spacing="12" MaximumWidthRequest="360">
+                    <Label Text="Paused" FontFamily="OpenSansSemibold" FontSize="32" TextColor="#E8FFF1" HorizontalOptions="Center" />
+                    <Button Text="Continue" Style="{StaticResource OverlayButton}" BackgroundColor="#39FF88" TextColor="#0B1410" Clicked="OnContinue" />
+                    <Button Text="Restart" Style="{StaticResource OverlayButton}" Clicked="OnRestart" />
+                    <Button Text="Home" Style="{StaticResource OverlayButton}" Clicked="OnHome" />
+                    <Button x:Name="PauseRemoveAds" Text="Remove ads" Style="{StaticResource OverlayButton}" Clicked="OnRemoveAds" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border
+                x:Name="OverPanel"
+                IsVisible="False"
+                BackgroundColor="#F20B1410"
+                StrokeThickness="0"
+                Padding="24">
+                <ScrollView VerticalOptions="Center">
+                    <VerticalStackLayout Spacing="10" MaximumWidthRequest="380">
+                        <Label x:Name="OverTitle" Text="Game over" FontFamily="OpenSansSemibold" FontSize="30" TextColor="#E8FFF1" HorizontalOptions="Center" />
+                        <Label x:Name="OverScore" FontFamily="OpenSansSemibold" FontSize="44" TextColor="#39FF88" HorizontalOptions="Center" />
+                        <Label x:Name="OverDetails" FontSize="15" TextColor="#C9E8D6" HorizontalTextAlignment="Center" />
+                        <Label x:Name="OverCode" FontSize="15" TextColor="#FFD23F" HorizontalTextAlignment="Center" />
+                        <Button x:Name="PlayAgainButton" Text="Play again" Style="{StaticResource OverlayButton}" BackgroundColor="#39FF88" TextColor="#0B1410" Clicked="OnRestart" />
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                            <Button Text="Share" Style="{StaticResource OverlayButton}" Clicked="OnShare" />
+                            <Button Grid.Column="1" Text="Home" Style="{StaticResource OverlayButton}" Clicked="OnHome" />
+                        </Grid>
+                        <Button x:Name="OverRemoveAds" Text="Remove ads" Style="{StaticResource OverlayButton}" BackgroundColor="Transparent" TextColor="#9CC9AE" Clicked="OnRemoveAds" />
+                    </VerticalStackLayout>
+                </ScrollView>
+            </Border>
+        </Grid>
+
+        <!-- D pad. Kept at least 48 dp above the ad strip by its bottom margin plus the gap row. -->
+        <Grid
+            x:Name="DPad"
+            Grid.Row="2"
+            IsVisible="False"
+            HorizontalOptions="Center"
+            Margin="0,8,0,24"
+            RowDefinitions="60,60,60"
+            ColumnDefinitions="60,60,60"
+            RowSpacing="8"
+            ColumnSpacing="8">
+            <Button Grid.Column="1" Text="^" Style="{StaticResource PadButton}" Pressed="OnPadUp" SemanticProperties.Description="Up" />
+            <Button Grid.Row="1" Text="&lt;" Style="{StaticResource PadButton}" Pressed="OnPadLeft" SemanticProperties.Description="Left" />
+            <Button Grid.Row="1" Grid.Column="2" Text="&gt;" Style="{StaticResource PadButton}" Pressed="OnPadRight" SemanticProperties.Description="Right" />
+            <Button Grid.Row="2" Grid.Column="1" Text="v" Style="{StaticResource PadButton}" Pressed="OnPadDown" SemanticProperties.Description="Down" />
+        </Grid>
+
+        <!-- 24 dp gap and a 1 dp divider between play and the banner. Touches here do nothing. -->
+        <Grid x:Name="AdGap" Grid.Row="3" HeightRequest="24">
+            <BoxView HeightRequest="1" VerticalOptions="End" Color="#1F3A2B" />
+        </Grid>
+
+        <controls:AdStrip x:Name="Ads" Grid.Row="4" InGame="True" />
+    </Grid>
+</ContentPage>

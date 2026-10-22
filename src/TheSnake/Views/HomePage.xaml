@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="TheSnake.Views.HomePage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:TheSnake.Controls"
+    BackgroundColor="#0B1410"
+    Shell.NavBarIsVisible="False">
+
+    <ContentPage.Resources>
+        <Style x:Key="Card" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="#12221A" />
+            <Setter Property="Stroke" Value="#1F3A2B" />
+            <Setter Property="StrokeThickness" Value="1" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 16" />
+            <Setter Property="Padding" Value="16,12" />
+        </Style>
+        <Style x:Key="ModeButton" TargetType="Button">
+            <Setter Property="BackgroundColor" Value="#16281F" />
+            <Setter Property="TextColor" Value="#E8FFF1" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontFamily" Value="OpenSansSemibold" />
+            <Setter Property="CornerRadius" Value="14" />
+            <Setter Property="MinimumHeightRequest" Value="56" />
+            <Setter Property="Padding" Value="12,8" />
+        </Style>
+        <Style x:Key="Small" TargetType="Label">
+            <Setter Property="TextColor" Value="#9CC9AE" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="*,Auto">
+        <ScrollView>
+            <VerticalStackLayout Padding="20,24,20,16" Spacing="14" MaximumWidthRequest="560">
+
+                <Label
+                    Text="THE SNAKE"
+                    FontFamily="OpenSansSemibold"
+                    FontSize="40"
+                    CharacterSpacing="6"
+                    TextColor="#39FF88"
+                    HorizontalOptions="Center"
+                    SemanticProperties.HeadingLevel="Level1" />
+                <Label
+                    Text="Classic Snake, rebuilt for today's phones"
+                    Style="{StaticResource Small}"
+                    HorizontalOptions="Center"
+                    Margin="0,-10,0,4" />
+
+                <Border Style="{StaticResource Card}">
+                    <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="8">
+                        <Label x:Name="LevelLabel" Text="Level 1" FontFamily="OpenSansSemibold" FontSize="18" TextColor="#E8FFF1" />
+                        <Label x:Name="StreakLabel" Grid.Column="1" Style="{StaticResource Small}" VerticalOptions="Center" />
+                        <ProgressBar x:Name="XpBar" Grid.Row="1" Grid.ColumnSpan="2" ProgressColor="#39FF88" BackgroundColor="#1F3A2B" />
+                    </Grid>
+                </Border>
+
+                <Button
+                    x:Name="PlayButton"
+                    Text="PLAY"
+                    FontSize="24"
+                    FontFamily="OpenSansSemibold"
+                    BackgroundColor="#39FF88"
+                    TextColor="#0B1410"
+                    CornerRadius="18"
+                    HeightRequest="72"
+                    Clicked="OnPlay"
+                    SemanticProperties.Description="Play Endless mode" />
+
+                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12">
+                    <Button x:Name="DailyButton" Style="{StaticResource ModeButton}" Text="Daily Run" Clicked="OnDaily" />
+                    <Button x:Name="WeeklyButton" Grid.Column="1" Style="{StaticResource ModeButton}" Text="Weekly Arena" Clicked="OnWeekly" />
+                    <Button x:Name="RetroButton" Grid.Row="1" Style="{StaticResource ModeButton}" Text="Retro 97" Clicked="OnRetro" />
+                    <Button Grid.Row="1" Grid.Column="1" Style="{StaticResource ModeButton}" Text="Challenge code" Clicked="OnChallenge" />
+                </Grid>
+
+                <Border Style="{StaticResource Card}">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Today's missions" FontFamily="OpenSansSemibold" FontSize="16" TextColor="#E8FFF1" />
+                        <VerticalStackLayout x:Name="MissionsList" Spacing="4" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Best scores" FontFamily="OpenSansSemibold" FontSize="16" TextColor="#E8FFF1" />
+                        <Label x:Name="BestLabel" Style="{StaticResource Small}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Label
+                    Text="Nearby Battle and Google Play leaderboards arrive in the next build."
+                    Style="{StaticResource Small}"
+                    HorizontalTextAlignment="Center" />
+
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                    <Button Style="{StaticResource ModeButton}" Text="Settings" Clicked="OnSettings" />
+                    <Button x:Name="RemoveAdsButton" Grid.Column="1" Style="{StaticResource ModeButton}" Text="Remove ads" Clicked="OnRemoveAds" />
+                </Grid>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <controls:AdStrip Grid.Row="1" />
+    </Grid>
+</ContentPage>

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="TheSnake.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    BackgroundColor="#0B1410"
+    Shell.NavBarIsVisible="False">
+
+    <ContentPage.Resources>
+        <Style TargetType="Label">
+            <Setter Property="TextColor" Value="#E8FFF1" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="VerticalOptions" Value="Center" />
+        </Style>
+        <Style x:Key="Section" TargetType="Label">
+            <Setter Property="TextColor" Value="#39FF88" />
+            <Setter Property="FontFamily" Value="OpenSansSemibold" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Margin" Value="0,12,0,0" />
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="BackgroundColor" Value="#16281F" />
+            <Setter Property="TextColor" Value="#E8FFF1" />
+            <Setter Property="CornerRadius" Value="14" />
+            <Setter Property="MinimumHeightRequest" Value="52" />
+        </Style>
+        <Style TargetType="Picker">
+            <Setter Property="TextColor" Value="#E8FFF1" />
+            <Setter Property="TitleColor" Value="#9CC9AE" />
+            <Setter Property="MinimumWidthRequest" Value="150" />
+        </Style>
+    </ContentPage.Resources>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20,24" Spacing="10" MaximumWidthRequest="560">
+            <Grid ColumnDefinitions="Auto,*">
+                <Button Text="Back" Clicked="OnBack" WidthRequest="90" />
+                <Label Grid.Column="1" Text="Settings" FontSize="26" FontFamily="OpenSansSemibold" HorizontalOptions="Center" />
+            </Grid>
+
+            <Label Text="SOUND AND FEEL" Style="{StaticResource Section}" />
+            <Grid ColumnDefinitions="*,Auto"><Label Text="Sound" /><Switch x:Name="SoundSwitch" Grid.Column="1" OnColor="#39FF88" Toggled="OnToggled" /></Grid>
+            <Grid ColumnDefinitions="*,Auto"><Label Text="Vibration" /><Switch x:Name="VibrationSwitch" Grid.Column="1" OnColor="#39FF88" Toggled="OnToggled" /></Grid>
+            <Grid ColumnDefinitions="*,Auto"><Label Text="Reduce motion (no shake or particles)" /><Switch x:Name="MotionSwitch" Grid.Column="1" OnColor="#39FF88" Toggled="OnToggled" /></Grid>
+
+            <Label Text="CONTROLS" Style="{StaticResource Section}" />
+            <Grid ColumnDefinitions="*,Auto"><Label Text="Controls" /><Picker x:Name="ControlsPicker" Grid.Column="1" SelectedIndexChanged="OnPicked" /></Grid>
+            <Label Text="Keyboards and game controllers always work: arrows, WASD or 2 4 6 8, Space or Start to pause." FontSize="13" TextColor="#9CC9AE" />
+
+            <Label Text="LOOK" Style="{StaticResource Section}" />
+            <Grid ColumnDefinitions="*,Auto"><Label Text="Theme" /><Picker x:Name="ThemePicker" Grid.Column="1" SelectedIndexChanged="OnPicked" /></Grid>
+            <Grid ColumnDefinitions="*,Auto"><Label Text="Retro 97 screen" /><Picker x:Name="RetroThemePicker" Grid.Column="1" SelectedIndexChanged="OnPicked" /></Grid>
+            <Label x:Name="LockedLabel" FontSize="13" TextColor="#9CC9AE" />
+
+            <Label Text="RETRO 97" Style="{StaticResource Section}" />
+            <Grid ColumnDefinitions="*,Auto"><Label Text="Purist (1 turn queue, no countdown)" /><Switch x:Name="PuristSwitch" Grid.Column="1" OnColor="#39FF88" Toggled="OnToggled" /></Grid>
+
+            <Label Text="HEALTHY PLAY" Style="{StaticResource Section}" />
+            <Grid ColumnDefinitions="*,Auto"><Label Text="Take a break reminder" /><Picker x:Name="BreakPicker" Grid.Column="1" SelectedIndexChanged="OnPicked" /></Grid>
+
+            <Label Text="ADS AND PRIVACY" Style="{StaticResource Section}" />
+            <Button x:Name="RemoveAdsButton" Text="Remove ads" Clicked="OnRemoveAds" />
+            <Button Text="Restore purchases" Clicked="OnRestore" />
+            <Button x:Name="PrivacyButton" Text="Privacy options" Clicked="OnPrivacy" />
+
+            <Label Text="ABOUT" Style="{StaticResource Section}" />
+            <Label x:Name="AboutLabel" FontSize="13" TextColor="#9CC9AE" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
