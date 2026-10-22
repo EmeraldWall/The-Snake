@@ -21,22 +21,27 @@
     <!-- Rows: HUD, arena, D pad, 24 dp gap with divider, ad strip (spec 9.1). -->
     <Grid RowDefinitions="Auto,*,Auto,Auto,Auto">
 
-        <Grid Padding="18,10,10,6" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+        <Grid Padding="16,10,16,8" ColumnDefinitions="*,Auto,*" ColumnSpacing="12">
             <VerticalStackLayout VerticalOptions="Center" Spacing="0">
-                <Label x:Name="ScoreLabel" Text="0" FontFamily="OpenSansSemibold" FontSize="28" TextColor="{DynamicResource Text}" />
+                <Label x:Name="ScoreLabel" Text="0" FontFamily="OpenSansSemibold" FontSize="28" TextColor="{DynamicResource Text}" LineHeight="1" />
                 <Label x:Name="BestLabel" Style="{StaticResource MutedText}" />
             </VerticalStackLayout>
-            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="4">
-                <Grid x:Name="ComboRow" ColumnDefinitions="Auto,*" ColumnSpacing="8">
-                    <Label x:Name="ComboLabel" Text="x1" FontFamily="OpenSansSemibold" FontSize="16" TextColor="{DynamicResource Highlight}" WidthRequest="34" />
-                    <ProgressBar x:Name="ComboBar" Grid.Column="1" ProgressColor="{DynamicResource Highlight}" VerticalOptions="Center" />
-                </Grid>
-                <Grid x:Name="PowerRow" ColumnDefinitions="Auto,*" ColumnSpacing="8" IsVisible="False">
-                    <Label x:Name="PowerLabel" FontSize="12" TextColor="{DynamicResource Text}" WidthRequest="74" />
-                    <ProgressBar x:Name="PowerBar" Grid.Column="1" VerticalOptions="Center" />
-                </Grid>
+
+            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="6" WidthRequest="120">
+                <Border x:Name="ComboRow" Padding="12,4" StrokeThickness="0" StrokeShape="RoundRectangle 14" BackgroundColor="{DynamicResource Surface}" HorizontalOptions="Center">
+                    <HorizontalStackLayout Spacing="8">
+                        <Label Text="COMBO" FontSize="11" CharacterSpacing="1" TextColor="{DynamicResource Muted}" VerticalOptions="Center" />
+                        <Label x:Name="ComboLabel" Text="x1" FontFamily="OpenSansSemibold" FontSize="16" TextColor="{DynamicResource Highlight}" VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                </Border>
+                <ProgressBar x:Name="ComboBar" ProgressColor="{DynamicResource Highlight}" HeightRequest="4" />
+                <VerticalStackLayout x:Name="PowerRow" Spacing="2" IsVisible="False">
+                    <Label x:Name="PowerLabel" FontSize="12" TextColor="{DynamicResource Text}" HorizontalTextAlignment="Center" />
+                    <ProgressBar x:Name="PowerBar" HeightRequest="4" />
+                </VerticalStackLayout>
             </VerticalStackLayout>
-            <Button Grid.Column="2" Text="II" Style="{StaticResource IconButton}" Clicked="OnPauseClicked" SemanticProperties.Description="Pause" />
+
+            <Button Grid.Column="2" Text="II" HorizontalOptions="End" VerticalOptions="Center" Style="{StaticResource IconButton}" Clicked="OnPauseClicked" SemanticProperties.Description="Pause" />
         </Grid>
 
         <Grid Grid.Row="1" Padding="8,0">
@@ -82,10 +87,10 @@
                 IsVisible="False" />
 
             <Grid x:Name="PausePanel" IsVisible="False">
-                <BoxView Color="Black" Opacity="0.55" />
-                <Border Style="{StaticResource Card}" BackgroundColor="{DynamicResource SurfaceRaised}" VerticalOptions="Center" Margin="24" MaximumWidthRequest="380" Padding="24">
+                <BoxView Color="#66000000" CornerRadius="20" />
+                <Border x:Name="PauseCard" Style="{StaticResource Card}" BackgroundColor="{DynamicResource SurfaceRaised}" VerticalOptions="Center" HorizontalOptions="Center" Padding="24,22">
                     <VerticalStackLayout Spacing="12">
-                        <Label Text="Paused" Style="{StaticResource Title}" HorizontalOptions="Center" />
+                        <Label Text="Paused" Style="{StaticResource Title}" HorizontalTextAlignment="Center" />
                         <Button Text="Continue" Style="{StaticResource PrimaryButton}" Clicked="OnContinue" />
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
                             <Button Text="Restart" Style="{StaticResource SecondaryButton}" Clicked="OnRestart" />
@@ -97,24 +102,24 @@
             </Grid>
 
             <Grid x:Name="OverPanel" IsVisible="False">
-                <BoxView Color="Black" Opacity="0.6" />
-                <Border Style="{StaticResource Card}" BackgroundColor="{DynamicResource SurfaceRaised}" VerticalOptions="Center" Margin="20" MaximumWidthRequest="400" Padding="24">
-                    <ScrollView>
-                        <VerticalStackLayout Spacing="10">
-                            <Label x:Name="OverTitle" Text="Game over" Style="{StaticResource Title}" HorizontalOptions="Center" />
-                            <Label x:Name="OverScore" FontFamily="OpenSansSemibold" FontSize="52" TextColor="{DynamicResource Accent}" HorizontalOptions="Center" />
-                            <Label x:Name="OverDetails" Style="{StaticResource Body}" HorizontalTextAlignment="Center" />
-                            <Border x:Name="CodeCard" Style="{StaticResource Card}" Padding="12,8" HorizontalOptions="Center">
-                                <Label x:Name="OverCode" TextColor="{DynamicResource Highlight}" FontFamily="OpenSansSemibold" FontSize="15" CharacterSpacing="2" />
-                            </Border>
-                            <Button x:Name="PlayAgainButton" Text="Play again" Style="{StaticResource PrimaryButton}" Clicked="OnRestart" />
-                            <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
-                                <Button Text="Share" Style="{StaticResource SecondaryButton}" Clicked="OnShare" />
-                                <Button Grid.Column="1" Text="Home" Style="{StaticResource SecondaryButton}" Clicked="OnHome" />
-                            </Grid>
-                            <Button x:Name="OverRemoveAds" Text="Remove ads" Style="{StaticResource GhostButton}" Clicked="OnRemoveAds" />
-                        </VerticalStackLayout>
-                    </ScrollView>
+                <BoxView Color="#66000000" CornerRadius="20" />
+                <Border x:Name="OverCard" Style="{StaticResource Card}" BackgroundColor="{DynamicResource SurfaceRaised}" VerticalOptions="Center" HorizontalOptions="Center" Padding="24,22">
+                    <VerticalStackLayout Spacing="12">
+                        <Label x:Name="OverTitle" Text="Game over" Style="{StaticResource Title}" HorizontalTextAlignment="Center" />
+                        <Label x:Name="OverScore" FontFamily="OpenSansSemibold" FontSize="52" TextColor="{DynamicResource Accent}" HorizontalTextAlignment="Center" LineHeight="1" />
+                        <Label x:Name="OverDetails" Style="{StaticResource Body}" HorizontalTextAlignment="Center" LineHeight="1.25" />
+                        <Label x:Name="OverRank" Style="{StaticResource MutedText}" HorizontalTextAlignment="Center" IsVisible="False" />
+                        <Border x:Name="CodeCard" Style="{StaticResource Card}" Padding="14,8" HorizontalOptions="Center">
+                            <Label x:Name="OverCode" TextColor="{DynamicResource Highlight}" FontFamily="OpenSansSemibold" FontSize="15" CharacterSpacing="2" />
+                        </Border>
+                        <Button x:Name="PlayAgainButton" Text="Play again" Style="{StaticResource PrimaryButton}" Clicked="OnRestart" />
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                            <Button Text="Share" Style="{StaticResource SecondaryButton}" Clicked="OnShare" />
+                            <Button Grid.Column="1" Text="Home" Style="{StaticResource SecondaryButton}" Clicked="OnHome" />
+                        </Grid>
+                        <Button x:Name="LeaderboardButton" Text="Leaderboard" Style="{StaticResource SecondaryButton}" Clicked="OnLeaderboard" IsVisible="False" />
+                        <Button x:Name="OverRemoveAds" Text="Remove ads" Style="{StaticResource GhostButton}" Clicked="OnRemoveAds" />
+                    </VerticalStackLayout>
                 </Border>
             </Grid>
         </Grid>

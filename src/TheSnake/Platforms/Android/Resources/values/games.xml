@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Google Play Games Services IDs. Replace these with the values from Play Console
+     (Play Games Services, Setup and management, Configuration, and the Leaderboards page).
+     While game_services_project_id is 0 the game runs without Play Games: scores stay on the phone. -->
+<resources>
+    <string name="game_services_project_id" translatable="false">0</string>
+    <string name="leaderboard_endless" translatable="false">REPLACE_ME</string>
+    <string name="leaderboard_daily_run" translatable="false">REPLACE_ME</string>
+    <string name="leaderboard_weekly_arena" translatable="false">REPLACE_ME</string>
+    <string name="leaderboard_retro_97" translatable="false">REPLACE_ME</string>
+</resources>

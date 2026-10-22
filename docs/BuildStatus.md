@@ -1,6 +1,6 @@
 # The Snake Build Status
 
-Build 0.2.0 (version code 3), October 2026. Package `com.vishvplus.thesnakegame`.
+Build 0.3.0 (version code 4), October 2026. Package `com.vishvplus.thesnakegame`.
 
 This is the first playable test build of spec 2.0. It is a test build, not a store build.
 
@@ -9,11 +9,19 @@ This is the first playable test build of spec 2.0. It is a test build, not a sto
 | Item | Value |
 |---|---|
 | SDK | .NET 10 SDK 10.0.113 with the `maui-android` workload |
-| Target | `net10.0-android`, target SDK 36 (Android 16), minimum SDK 23 (Android 6.0) |
+| Target | `net10.0-android`, target SDK 36 (Android 16), minimum SDK 24 (Android 7.0). The minimum went up from 23 in 0.3.0 because Google Play services basement 18.12, pulled in by Play Games and Nearby, needs 24 |
 | Why not .NET 11 and API 37 | The .NET 11 SDK could not be downloaded in the build machine, and .NET 11 is not final yet. This is the fallback in spec 3.1. The APK still installs and runs on Android 17 phones. Change `TargetFramework` to `net11.0-android` once .NET 11 ships |
 | ABIs | arm64-v8a, armeabi-v7a, x86_64 |
 | Signing | Android debug key. Fine for installing by hand, not accepted by Google Play |
 | Ad IDs | Google's public AdMob test IDs, so only test ads show |
+
+## What changed in 0.3.0
+
+* **Google Play Games leaderboards.** Play Games Services v2 through Microsoft's `Xamarin.GooglePlayServices.Games.V2` 122.1.0 binding. In this version the leaderboard calls that one vendor reported missing are all present, so no Java bridge was needed. Four boards: Endless (all time), Daily Run (daily), Weekly Arena (weekly), Retro 97 (all time). Only plausible scores are sent, and only today's first Daily Run. Scores made while signed out wait on the phone and are sent after the next sign in. The game over card shows your rank when Play Games returns one, and has a Leaderboard button; Home has a Leaderboards button.
+* **Works before Play Console is set up.** All IDs live in `Platforms/Android/Resources/values/games.xml`. While the project ID there is 0, the Play Games SDK is never started (its own start up provider is removed in the manifest and `MainApplication` starts it only with real IDs), so the app cannot crash for a missing ID and scores simply stay on the phone.
+* **Nearby Battle.** 2 to 4 phones in the same room through Google Play services Nearby Connections (`Xamarin.GooglePlayServices.Nearby` 119.5.0, P2P_STAR strategy), with no internet. One phone hosts and runs the only battle engine; the others send turns and draw the state the host sends every 150 ms tick (73 bytes for 4 players). Rules from spec 5.2: any body kills, head on crashes kill both, last snake alive wins or the longest after 2 minutes. A player who leaves turns grey and stops. Each player has a colour and a body pattern (solid, stripes, dots, outline). Your own turns show at once on your phone while the host catches up. Lobby, countdown, results and rematch are all in app. Bluetooth, Wi Fi and nearby device permissions follow Google's Nearby Connections guide and are asked only when you host or join. Bluetooth, Wi Fi and location are marked as optional features so phones without them can still install the game.
+* **Layout fixes from the 0.2.0 screenshot.** The Game over and Pause cards no longer stretch to the full height or clip their buttons on the right: the scroll container inside the card is gone and the cards are centred at a fixed width (up to 400 dp). The dim layer behind them is a soft 40 percent shade instead of solid black. The top bar is now score on the left, a centred combo pill with a thin bar, and the pause button on the right with equal 16 dp margins. Sheets and the Home and Settings columns are also centred by width, so they look right on tablets.
+* **New unit tests.** 9 battle and score check tests (start positions, simultaneous moves, kills, head on draws, time up, players leaving, wire format round trips). 43 tests in total, all passing.
 
 ## What changed in 0.2.0
 
@@ -24,7 +32,7 @@ This is the first playable test build of spec 2.0. It is a test build, not a sto
 
 ## Testing so far
 
-* The 32 Core unit tests pass. They cover movement, turns, wraparound, walls, collisions, growth, speed, combos, power ups, Retro rules, mazes, seeds, challenge codes and progression.
+* The 43 Core unit tests pass. They cover movement, turns, wraparound, walls, collisions, growth, speed, combos, power ups, Retro rules, mazes, seeds, challenge codes and progression.
 * The Release APK builds and was checked with `aapt` and `apksigner`.
 * **0.1.1 fixes the empty arena in 0.1.0.** The game screen waited for its play area to have a size, but it listened to the page's size event, which fires before the play area is measured. No run was ever created, so no snake or food was drawn. It now listens to the play area itself, with a delayed fallback.
 * An Android 9 emulator did boot and 0.1.1 installed on it, but under software emulation Android's own system service kept being restarted by its watchdog, so the app could not be opened there. No crash of The Snake itself was recorded.
@@ -43,10 +51,10 @@ This is the first playable test build of spec 2.0. It is a test build, not a sto
 | 9.1 One bottom banner, reserved height, 24 dp gap with divider, quiet house message | Done |
 | 9.2 Remove ads one time purchase, acknowledge, restore on start and resume, offline cache | Done in code. Can only be tested once the app is in a Play Console test track with the `remove_ads` product |
 | 9.3 UMP consent and Privacy options | Done |
-| 10 Google Play Games sign in, leaderboards, achievements, saved games | Not yet. Needs the Play Console game project ID. Daily and Weekly scores are kept on the phone for now |
-| 5.2 Nearby Battle | Not yet |
+| 10 Google Play Games sign in and leaderboards | Done in code. Switches on when real IDs are put in games.xml. Achievements and saved games are not built yet |
+| 5.2 Nearby Battle | Done. Needs two or more real phones to test |
 | Snake skins and looks | Done as free options. Extra Endless arenas and trails are not built yet |
-| 14.1 Unit tests | 32 tests for the Core project, all passing |
+| 14.1 Unit tests | 43 tests for the Core project, all passing |
 
 ## Changes from the spec layout
 

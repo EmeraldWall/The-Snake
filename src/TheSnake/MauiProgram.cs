@@ -34,7 +34,11 @@ public static class MauiProgram
         builder.Services.AddSingleton<IAdService, AdMobService>();
         builder.Services.AddSingleton<IStoreService, PlayBillingService>();
         builder.Services.AddTransient<IFrameTicker, ChoreographerTicker>();
+        builder.Services.AddSingleton<IGamesService, PlayGamesService>();
+        builder.Services.AddSingleton<INearbyService, NearbyConnectionsService>();
 #else
+        builder.Services.AddSingleton<IGamesService, NoGamesService>();
+        builder.Services.AddSingleton<INearbyService, NoNearbyService>();
         builder.Services.AddTransient<IFrameTicker, TimerFrameTicker>();
         builder.Services.AddSingleton<ISoundService, SilentSoundService>();
         builder.Services.AddSingleton<IAdService, NoAdService>();

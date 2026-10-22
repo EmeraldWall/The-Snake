@@ -14,11 +14,11 @@
 
 		<ApplicationTitle>The Snake</ApplicationTitle>
 		<ApplicationId>com.vishvplus.thesnakegame</ApplicationId>
-		<ApplicationDisplayVersion>0.2.0</ApplicationDisplayVersion>
-		<ApplicationVersion>3</ApplicationVersion>
+		<ApplicationDisplayVersion>0.3.0</ApplicationDisplayVersion>
+		<ApplicationVersion>4</ApplicationVersion>
 
-		<!-- The Google Mobile Ads SDK needs Android 6.0 (API 23) or later. -->
-		<SupportedOSPlatformVersion>23.0</SupportedOSPlatformVersion>
+		<!-- Google Play services (basement 18.12, pulled in by Play Games and Nearby) needs Android 7.0 (API 24) or later. -->
+		<SupportedOSPlatformVersion>24.0</SupportedOSPlatformVersion>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)' == 'Release'">
@@ -42,6 +42,8 @@
 		<!-- Billing pulls in Fragment 1.9.0, while MAUI still brings Fragment.Ktx 1.8.8. Fragment 1.9 merged the
 		     Ktx classes, so the two clash ("FragmentKt defined multiple times"). Keep both on 1.9.0. -->
 		<PackageReference Include="Xamarin.AndroidX.Fragment.Ktx" Version="1.9.0" />
+		<PackageReference Include="Xamarin.GooglePlayServices.Games.V2" Version="122.1.0" />
+		<PackageReference Include="Xamarin.GooglePlayServices.Nearby" Version="119.5.0" />
 	</ItemGroup>
 
 	<ItemGroup>

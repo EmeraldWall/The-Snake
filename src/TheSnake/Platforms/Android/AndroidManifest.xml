@@ -1,11 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
 	<application android:allowBackup="true" android:icon="@mipmap/appicon" android:roundIcon="@mipmap/appicon_round" android:supportsRtl="true" android:label="The Snake">
 		<!-- AdMob app ID. This is Google's public test ID. Replace it with the real one before release (see Services/Monetisation.cs). -->
 		<meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-3940256099942544~3347511713" />
+
+		<!-- Play Games Services project ID, from Resources/values/games.xml. -->
+		<meta-data android:name="com.google.android.gms.games.APP_ID" android:value="@string/game_services_project_id" />
+
+		<!-- Play Games starts itself through this provider at launch. It is removed so the app can run without a
+		     real project ID; MainApplication starts the SDK instead once games.xml is filled in. -->
+		<provider android:name="com.google.android.gms.games.provider.PlayGamesInitProvider" android:authorities="${applicationId}.PlayGamesInitProvider" tools:node="remove" />
 	</application>
+
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 	<uses-permission android:name="android.permission.INTERNET" />
 	<uses-permission android:name="android.permission.VIBRATE" />
 	<uses-permission android:name="com.google.android.gms.permission.AD_ID" />
+
+	<!-- Nearby Battle (Nearby Connections). The list follows Google's Nearby Connections set up guide.
+	     The runtime ones are only asked for when the player opens Nearby Battle. -->
+	<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+	<uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+	<uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+	<uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" android:maxSdkVersion="28" />
+	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="31" />
+	<uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
+	<uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+	<uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+	<uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" />
+
+	<!-- Bluetooth and Wi Fi are only needed for Nearby Battle, so phones without them can still install the game. -->
+	<uses-feature android:name="android.hardware.bluetooth" android:required="false" />
+	<uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />
+	<uses-feature android:name="android.hardware.wifi" android:required="false" />
+	<uses-feature android:name="android.hardware.location" android:required="false" />
 </manifest>

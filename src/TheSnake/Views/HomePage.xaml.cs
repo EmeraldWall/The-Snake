@@ -10,11 +10,15 @@ public partial class HomePage : ContentPage, IHasSheetHost
     private readonly AppSettings _settings = ServiceHelper.Get<AppSettings>();
     private readonly IStoreService _store = ServiceHelper.Get<IStoreService>();
     private readonly IAdService _ads = ServiceHelper.Get<IAdService>();
+    private readonly IGamesService _games = ServiceHelper.Get<IGamesService>();
     private bool _started;
 
     public HomePage()
     {
         InitializeComponent();
+
+        // Full width on phones, a centred column on tablets and foldables.
+        SizeChanged += (_, _) => Body.WidthRequest = Math.Min(560, Width);
         _store.EntitlementChanged += (_, _) => Refresh();
     }
 
@@ -35,6 +39,9 @@ public partial class HomePage : ContentPage, IHasSheetHost
             {
                 await _ads.InitializeAsync();
             }
+
+            // Play Games v2 signs in on its own. This only reads the result.
+            await _games.RefreshSignInAsync();
         }
     }
 
@@ -135,6 +142,19 @@ public partial class HomePage : ContentPage, IHasSheetHost
         }
 
         await Start(setup, "challenge:" + ChallengeCode.Encode(setup));
+    }
+
+    private void OnBattle(object? sender, TappedEventArgs e) => _ = Navigation.PushAsync(new BattlePage(), animated: false);
+
+    private async void OnLeaderboards(object? sender, EventArgs e)
+    {
+        if (!_games.IsConfigured)
+        {
+            await Dialogs.AlertAsync("Leaderboards", "Google Play leaderboards switch on once the game is published with its Play Games ID. Until then your best scores are kept on this phone.");
+            return;
+        }
+
+        await _games.ShowLeaderboardAsync();
     }
 
     private void OnSettings(object? sender, EventArgs e) => _ = Navigation.PushAsync(new SettingsPage(), animated: false);

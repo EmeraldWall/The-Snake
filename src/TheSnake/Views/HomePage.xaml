@@ -9,7 +9,7 @@
 
     <Grid RowDefinitions="*,Auto">
         <ScrollView>
-            <VerticalStackLayout Padding="20,28,20,20" Spacing="14" MaximumWidthRequest="560">
+            <VerticalStackLayout x:Name="Body" Padding="20,28,20,20" Spacing="14" HorizontalOptions="Center">
 
                 <Grid ColumnDefinitions="*,Auto">
                     <VerticalStackLayout Spacing="0">
@@ -61,6 +61,17 @@
                 </Grid>
 
                 <Border Style="{StaticResource Card}">
+                    <Border.GestureRecognizers><TapGestureRecognizer Tapped="OnBattle" /></Border.GestureRecognizers>
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="Nearby Battle" Style="{StaticResource Heading}" />
+                            <Label Text="2 to 4 phones in the same room, no internet needed" Style="{StaticResource MutedText}" />
+                        </VerticalStackLayout>
+                        <Label Grid.Column="1" Text="&#x203A;" FontSize="30" TextColor="{DynamicResource Muted}" VerticalOptions="Center" />
+                    </Grid>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
                     <VerticalStackLayout Spacing="8">
                         <Label Text="Today's missions" Style="{StaticResource Heading}" />
                         <VerticalStackLayout x:Name="MissionsList" Spacing="6" />
@@ -75,11 +86,10 @@
                 </Border>
 
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
-                    <Button Text="Themes and look" Style="{StaticResource SecondaryButton}" Clicked="OnSettings" />
-                    <Button x:Name="RemoveAdsButton" Grid.Column="1" Text="Remove ads" Style="{StaticResource SecondaryButton}" Clicked="OnRemoveAds" />
+                    <Button Text="Leaderboards" Style="{StaticResource SecondaryButton}" Clicked="OnLeaderboards" />
+                    <Button Grid.Column="1" Text="Themes and look" Style="{StaticResource SecondaryButton}" Clicked="OnSettings" />
                 </Grid>
-
-                <Label Text="Nearby Battle and Google Play leaderboards are coming in a later build." Style="{StaticResource MutedText}" HorizontalTextAlignment="Center" />
+                <Button x:Name="RemoveAdsButton" Text="Remove ads" Style="{StaticResource GhostButton}" Clicked="OnRemoveAds" />
             </VerticalStackLayout>
         </ScrollView>
 

@@ -37,3 +37,4 @@ dotnet publish src/TheSnake -f net10.0-android -c Release -p:AndroidPackageForma
 * Replace the AdMob test IDs in `src/TheSnake/Services/Monetisation.cs` and `src/TheSnake/Platforms/Android/AndroidManifest.xml` with your real ones.
 * Create the one time product `remove_ads` in Play Console.
 * Sign with your own upload key, not the debug key.
+* Set up Play Games Services in Play Console, create four leaderboards (Endless, Daily Run, Weekly Arena, Retro 97), and put the project ID and leaderboard IDs in `src/TheSnake/Platforms/Android/Resources/values/games.xml`.

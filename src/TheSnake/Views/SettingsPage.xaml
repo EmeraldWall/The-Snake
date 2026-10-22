@@ -8,7 +8,7 @@
 
     <Grid>
         <ScrollView>
-            <VerticalStackLayout x:Name="Body" Padding="20,24,20,32" Spacing="8" MaximumWidthRequest="620">
+            <VerticalStackLayout x:Name="Body" Padding="20,24,20,32" Spacing="8" HorizontalOptions="Center">
                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" Margin="0,0,0,4">
                     <Button Text="&#x2039;" FontSize="30" Style="{StaticResource IconButton}" Clicked="OnBack" SemanticProperties.Description="Back" />
                     <Label Grid.Column="1" Text="Themes and settings" Style="{StaticResource Title}" VerticalOptions="Center" />

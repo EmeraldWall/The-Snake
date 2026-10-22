@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="TheSnake.Views.BattlePage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:TheSnake.Controls"
+    xmlns:ui="clr-namespace:TheSnake.Ui"
+    Style="{StaticResource PageStyle}">
+
+    <!-- Rows: header, content, player strip, 24 dp gap, ad strip. -->
+    <Grid RowDefinitions="Auto,*,Auto,Auto,Auto">
+
+        <Grid Padding="16,10,16,8" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+            <Button Text="&#x2039;" FontSize="30" Style="{StaticResource IconButton}" Clicked="OnBack" SemanticProperties.Description="Leave" />
+            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="0">
+                <Label Text="Nearby Battle" Style="{StaticResource Heading}" />
+                <Label x:Name="StatusLabel" Style="{StaticResource MutedText}" />
+            </VerticalStackLayout>
+            <Label x:Name="TimerLabel" Grid.Column="2" FontFamily="OpenSansSemibold" FontSize="22" TextColor="{DynamicResource Text}" VerticalOptions="Center" IsVisible="False" />
+        </Grid>
+
+        <!-- Lobby -->
+        <ScrollView x:Name="LobbyPanel" Grid.Row="1">
+            <VerticalStackLayout x:Name="LobbyBody" Padding="20,8,20,20" Spacing="12" HorizontalOptions="Center">
+                <Border Style="{StaticResource Card}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Play with 2 to 4 phones in the same room. No internet needed, it uses Bluetooth and Wi Fi." Style="{StaticResource Body}" />
+                        <Label Text="Your name" Style="{StaticResource MutedText}" />
+                        <Border Padding="12,2" StrokeShape="RoundRectangle 14" BackgroundColor="{DynamicResource SurfaceRaised}" Stroke="{DynamicResource Stroke}">
+                            <Entry x:Name="NameEntry" MaxLength="12" FontSize="18" TextColor="{DynamicResource Text}" PlaceholderColor="{DynamicResource Muted}" Placeholder="Player" />
+                        </Border>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Grid x:Name="ChooseRow" ColumnDefinitions="*,*" ColumnSpacing="12">
+                    <Button Text="Host a battle" Style="{StaticResource PrimaryButton}" Clicked="OnHost" />
+                    <Button Grid.Column="1" Text="Join a battle" Style="{StaticResource SecondaryButton}" Clicked="OnJoin" />
+                </Grid>
+
+                <Label x:Name="ListTitle" Style="{StaticResource Heading}" IsVisible="False" />
+                <VerticalStackLayout x:Name="ListBody" Spacing="10" />
+                <Label x:Name="ListHint" Style="{StaticResource MutedText}" HorizontalTextAlignment="Center" IsVisible="False" />
+
+                <Button x:Name="StartButton" Text="Start battle" Style="{StaticResource PrimaryButton}" Clicked="OnStart" IsVisible="False" />
+                <Button x:Name="CancelButton" Text="Cancel" Style="{StaticResource GhostButton}" Clicked="OnCancel" IsVisible="False" />
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Play -->
+        <Grid x:Name="PlayPanel" Grid.Row="1" Padding="8,0" IsVisible="False">
+            <GraphicsView
+                x:Name="Arena"
+                StartInteraction="OnTouchStart"
+                DragInteraction="OnTouchMove"
+                EndInteraction="OnTouchEnd" />
+
+            <Label
+                x:Name="CountdownLabel"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                FontFamily="OpenSansSemibold"
+                FontSize="84"
+                TextColor="{DynamicResource Text}"
+                InputTransparent="True"
+                IsVisible="False" />
+
+            <Grid x:Name="ResultPanel" IsVisible="False">
+                <BoxView Color="#66000000" CornerRadius="20" />
+                <Border x:Name="ResultCard" Style="{StaticResource Card}" BackgroundColor="{DynamicResource SurfaceRaised}" VerticalOptions="Center" HorizontalOptions="Center" Padding="24,22">
+                    <VerticalStackLayout Spacing="12">
+                        <Label x:Name="ResultTitle" Style="{StaticResource Title}" HorizontalTextAlignment="Center" />
+                        <VerticalStackLayout x:Name="ResultList" Spacing="6" />
+                        <Button x:Name="RematchButton" Text="Rematch" Style="{StaticResource PrimaryButton}" Clicked="OnRematch" />
+                        <Label x:Name="WaitingLabel" Text="Waiting for the host to start a rematch" Style="{StaticResource MutedText}" HorizontalTextAlignment="Center" />
+                        <Button Text="Leave" Style="{StaticResource SecondaryButton}" Clicked="OnBack" />
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <!-- Who is who: colour, pattern and status of each player. -->
+        <FlexLayout x:Name="PlayerStrip" Grid.Row="2" Wrap="Wrap" JustifyContent="Center" Padding="12,4" IsVisible="False" />
+
+        <Grid x:Name="AdGap" Grid.Row="3" HeightRequest="24">
+            <BoxView HeightRequest="1" VerticalOptions="End" Color="{DynamicResource Stroke}" />
+        </Grid>
+
+        <controls:AdStrip Grid.Row="4" InGame="True" />
+
+        <ui:SheetHost x:Name="SheetLayer" Grid.RowSpan="5" />
+    </Grid>
+</ContentPage>

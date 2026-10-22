@@ -7,4 +7,8 @@
     <RootNamespace>TheSnake.Core</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="TheSnake.Core.Tests" />
+  </ItemGroup>
+
 </Project>

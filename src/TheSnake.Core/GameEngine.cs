@@ -160,6 +160,13 @@ public sealed class GameEngine
         }
     }
 
+    /// <summary>
+    /// Rejects scores no real run could reach (spec 5.1), so a tampered score is never sent to a leaderboard.
+    /// The extra 1000 covers the bonus for filling the whole grid.
+    /// </summary>
+    public static bool IsPlausibleScore(long score, int ticks) =>
+        score >= 0 && score <= (long)ticks * MaxPointsPerTick + 1000;
+
     public bool IsObstacle(GridPoint p) => Setup.Obstacles.Contains(p);
 
     public bool IsOccupiedBySnake(GridPoint p) => InBounds(p) && _occupied[p.X, p.Y] > 0;

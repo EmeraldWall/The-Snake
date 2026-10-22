@@ -43,6 +43,7 @@ public partial class GamePage : ContentPage, IHasSheetHost
     private readonly Feedback _feedback = ServiceHelper.Get<Feedback>();
     private readonly IStoreService _store = ServiceHelper.Get<IStoreService>();
     private readonly IFrameTicker _ticker = ServiceHelper.Get<IFrameTicker>();
+    private readonly IGamesService _games = ServiceHelper.Get<IGamesService>();
     private readonly GameDrawable _drawable = new();
     private GameEngine? _engine;
     private State _state = State.WaitingForSize;
@@ -118,6 +119,7 @@ public partial class GamePage : ContentPage, IHasSheetHost
         _drawable.ReduceMotion = _settings.ReduceMotion;
         DPad.IsVisible = _settings.Controls == ControlScheme.DPad;
         ComboRow.IsVisible = !IsRetro;
+        ComboBar.IsVisible = !IsRetro;
         Arena.Invalidate();
     }
 
@@ -127,6 +129,11 @@ public partial class GamePage : ContentPage, IHasSheetHost
         {
             return;
         }
+
+        // Overlay cards: centred, never wider than 400, always 20 dp clear of the arena edges.
+        double cardWidth = Math.Min(400, Arena.Width - 40);
+        PauseCard.WidthRequest = cardWidth;
+        OverCard.WidthRequest = cardWidth;
 
         bool landscape = Arena.Width > Arena.Height;
         if (_state == State.WaitingForSize)
@@ -625,6 +632,18 @@ public partial class GamePage : ContentPage, IHasSheetHost
         CodeCard.IsVisible = code;
         OverCode.Text = code ? $"CODE  {ChallengeCode.Encode(_engine.Setup)}" : "";
 
+        // Google Play Games leaderboards. Only plausible scores are sent, and only today's first Daily Run.
+        var board = IGamesService.BoardFor(_engine.Setup.Mode);
+        bool ranked = board is not null && (_engine.Setup.Mode != GameMode.DailyRun || reward.RankedDaily);
+        if (board is { } b && ranked && _games.IsConfigured && GameEngine.IsPlausibleScore(_engine.Score, _engine.Ticks))
+        {
+            _games.Submit(b, _engine.Score);
+            _ = ShowRankAsync(b);
+        }
+
+        OverRank.IsVisible = false;
+        LeaderboardButton.IsVisible = board is not null && _games.IsConfigured;
+
         bool offer = !_store.IsAdFree && !s_offeredRemoveAdsThisSession;
         OverRemoveAds.IsVisible = offer;
         s_offeredRemoveAdsThisSession |= offer;
@@ -637,6 +656,25 @@ public partial class GamePage : ContentPage, IHasSheetHost
         {
             s_breakShown = true;
             _ = Dialogs.AlertAsync("Time for a break?", $"You have played for over {_settings.BreakReminderMinutes} minutes. Your progress is saved.", "Got it");
+        }
+    }
+
+    private async Task ShowRankAsync(Board board)
+    {
+        // Give Play Games a moment to take the new score before asking for the rank.
+        await Task.Delay(1500);
+        if (await _games.GetRankTextAsync(board) is { } rank && _state == State.Over)
+        {
+            OverRank.Text = rank;
+            OverRank.IsVisible = true;
+        }
+    }
+
+    private async void OnLeaderboard(object? sender, EventArgs e)
+    {
+        if (_engine is not null && IGamesService.BoardFor(_engine.Setup.Mode) is { } board)
+        {
+            await _games.ShowLeaderboardAsync(board);
         }
     }
 
