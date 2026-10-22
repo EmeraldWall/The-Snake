@@ -15,6 +15,12 @@ This is the first playable test build of spec 2.0. It is a test build, not a sto
 | Signing | Android debug key. Fine for installing by hand, not accepted by Google Play |
 | Ad IDs | Google's public AdMob test IDs, so only test ads show |
 
+## Testing so far
+
+* The 32 Core unit tests pass. They cover movement, turns, wraparound, walls, collisions, growth, speed, combos, power ups, Retro rules, mazes, seeds, challenge codes and progression.
+* The Release APK builds and was checked with `aapt` and `apksigner`.
+* **The app has not yet been run on a device.** The build machine has no hardware virtualisation, and the software emulator had still not finished booting after an hour. Install the APK on a real phone first and report anything that goes wrong.
+
 ## What is in this build
 
 | Spec section | Status |
