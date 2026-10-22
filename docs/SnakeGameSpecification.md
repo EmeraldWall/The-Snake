@@ -55,6 +55,17 @@ This document describes a modern, highly replayable Snake game for Android 17, m
 | Minimum Android version | The highest minimum required by MAUI and the packages below. Check it at build time and record it in the store listing |
 | Rendering | `GraphicsView` and an `IDrawable` from Microsoft.Maui.Graphics. Frame timing from Android `Choreographer` in `Platforms/Android` |
 | Language | C# for logic, XAML for menus |
+| Application ID (package name) | `com.vishvplus.thesnakegame` |
+
+### 3.1.1 Application ID
+
+The app's package name on Google Play is **`com.vishvplus.thesnakegame`**. Google Play does not allow the package name to change after the first upload, so set it before the first build that goes to Play Console.
+
+* In `TheSnake.csproj` set `<ApplicationId>com.vishvplus.thesnakegame</ApplicationId>`. In Visual Studio this is the "Application ID" box under Project Properties, MAUI Shared, General.
+* Keep `<ApplicationTitle>The Snake</ApplicationTitle>` as the name shown under the icon.
+* The C# root namespace stays `TheSnake`. It does not have to match the package name.
+* Use the same ID when creating the app in Play Console, linking Play Games Services, adding the AdMob app and creating the `remove_ads` product.
+* Debug builds may add a suffix (`com.vishvplus.thesnakegame.debug`) so a test build and the store build can sit on the same phone. Release builds never use the suffix.
 
 ### 3.2 Packages
 
@@ -379,7 +390,7 @@ All 1.2 tests still apply to Retro 97, plus speed ramp, combo window and cap, ne
 ## 15. Build and release
 
 1. Open `TheSnake.sln` in Visual Studio 2026.
-2. Set up in Play Console the app, the `remove_ads` product, Play Games Services (leaderboards, achievements, saved games on) and the AdMob app and banner unit.
+2. Set up in Play Console the app with package name `com.vishvplus.thesnakegame`, the `remove_ads` product, Play Games Services (leaderboards, achievements, saved games on) and the AdMob app and banner unit.
 3. Use AdMob test ad units in Debug builds, and real units only in Release.
 4. Publish through the Visual Studio Archive Manager as a signed AAB.
 5. Complete the Data safety form, advertising ID declaration and content rating in Play Console.
