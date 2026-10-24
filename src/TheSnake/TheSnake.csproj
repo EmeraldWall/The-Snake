@@ -14,8 +14,8 @@
 
 		<ApplicationTitle>The Snake</ApplicationTitle>
 		<ApplicationId>com.vishvplus.thesnakegame</ApplicationId>
-		<ApplicationDisplayVersion>0.3.0</ApplicationDisplayVersion>
-		<ApplicationVersion>4</ApplicationVersion>
+		<ApplicationDisplayVersion>0.3.2</ApplicationDisplayVersion>
+		<ApplicationVersion>6</ApplicationVersion>
 
 		<!-- Google Play services (basement 18.12, pulled in by Play Games and Nearby) needs Android 7.0 (API 24) or later. -->
 		<SupportedOSPlatformVersion>24.0</SupportedOSPlatformVersion>

@@ -130,10 +130,10 @@ public partial class GamePage : ContentPage, IHasSheetHost
             return;
         }
 
-        // Overlay cards: centred, never wider than 400, always 20 dp clear of the arena edges.
-        double cardWidth = Math.Min(400, Arena.Width - 40);
-        PauseCard.WidthRequest = cardWidth;
-        OverCard.WidthRequest = cardWidth;
+        // Overlay cards: never wider than 400 and always at least 20 dp from the arena edges, centred by margin.
+        var cardMargin = new Thickness(Math.Max(20, (Arena.Width - 400) / 2), 0);
+        PauseCard.Margin = cardMargin;
+        OverCard.Margin = cardMargin;
 
         bool landscape = Arena.Width > Arena.Height;
         if (_state == State.WaitingForSize)

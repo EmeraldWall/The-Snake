@@ -1,6 +1,6 @@
 # The Snake Build Status
 
-Build 0.3.0 (version code 4), October 2026. Package `com.vishvplus.thesnakegame`.
+Build 0.3.2 (version code 6), October 2026. Package `com.vishvplus.thesnakegame`.
 
 This is the first playable test build of spec 2.0. It is a test build, not a store build.
 
@@ -14,6 +14,13 @@ This is the first playable test build of spec 2.0. It is a test build, not a sto
 | ABIs | arm64-v8a, armeabi-v7a, x86_64 |
 | Signing | Android debug key. Fine for installing by hand, not accepted by Google Play |
 | Ad IDs | Google's public AdMob test IDs, so only test ads show |
+
+## What changed in 0.3.1 and 0.3.2
+
+* **Fixed: 0.3.0 crashed as soon as it opened.** Captured on an Android 9 emulator: `java.lang.UnsatisfiedLinkError: No implementation found for void ...MainApplication.n_onCreate()`. 0.3.0 overrode `MainApplication.OnCreate` to start Play Games, and in the Release build the native link for that override was not registered, so Android stopped the app before any game code ran. `OnCreate` is no longer overridden; the start up work now runs in `CreateMauiApp`, which `MauiApplication.OnCreate` already calls. 0.3.1 and 0.3.2 were installed on the same emulator and keep running with no crash.
+* **Crash reports.** .NET and Java crashes are now written to a small file. On the next launch the app shows a sheet that offers to share the report, which holds only the error details.
+* **Safer centring.** 0.3.0 centred the Home, Settings and Battle columns, the sheets and the Game over and Pause cards by giving them a fixed width at run time. On the emulator this left Home with only its title placed. They now fill the width again, as in 0.2.0, and are centred on tablets with side padding or margins instead.
+* **Emulator limit.** The software emulator here never draws MAUI screens (0.2.0, which works on real phones, also stays blank there), so it can confirm crashes but not how screens look.
 
 ## What changed in 0.3.0
 

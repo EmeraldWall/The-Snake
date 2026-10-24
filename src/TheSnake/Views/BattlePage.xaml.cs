@@ -65,8 +65,9 @@ public partial class BattlePage : ContentPage, IHasSheetHost
         NameEntry.Text = Preferences.Default.Get("battle.name", "");
         SizeChanged += (_, _) =>
         {
-            LobbyBody.WidthRequest = Math.Min(560, Width);
-            ResultCard.WidthRequest = Math.Min(400, Width - 56);
+            double side = Math.Max(20, (Width - 560) / 2);
+            LobbyBody.Padding = new Thickness(side, 8, side, 20);
+            ResultCard.Margin = new Thickness(Math.Max(20, (Width - 16 - 400) / 2), 0);
         };
         Arena.SizeChanged += (_, _) =>
         {

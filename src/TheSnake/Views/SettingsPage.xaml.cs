@@ -27,7 +27,11 @@ public partial class SettingsPage : ContentPage, IHasSheetHost
         InitializeComponent();
 
         // Full width on phones, a centred column on tablets and foldables.
-        SizeChanged += (_, _) => Body.WidthRequest = Math.Min(620, Width);
+        SizeChanged += (_, _) =>
+        {
+            double side = Math.Max(20, (Width - 620) / 2);
+            Body.Padding = new Thickness(side, 24, side, 32);
+        };
         Build();
     }
 

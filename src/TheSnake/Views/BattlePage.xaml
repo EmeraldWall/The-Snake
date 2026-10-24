@@ -21,7 +21,7 @@
 
         <!-- Lobby -->
         <ScrollView x:Name="LobbyPanel" Grid.Row="1">
-            <VerticalStackLayout x:Name="LobbyBody" Padding="20,8,20,20" Spacing="12" HorizontalOptions="Center">
+            <VerticalStackLayout x:Name="LobbyBody" Padding="20,8,20,20" Spacing="12">
                 <Border Style="{StaticResource Card}">
                     <VerticalStackLayout Spacing="8">
                         <Label Text="Play with 2 to 4 phones in the same room. No internet needed, it uses Bluetooth and Wi Fi." Style="{StaticResource Body}" />
@@ -66,7 +66,7 @@
 
             <Grid x:Name="ResultPanel" IsVisible="False">
                 <BoxView Color="#66000000" CornerRadius="20" />
-                <Border x:Name="ResultCard" Style="{StaticResource Card}" BackgroundColor="{DynamicResource SurfaceRaised}" VerticalOptions="Center" HorizontalOptions="Center" Padding="24,22">
+                <Border x:Name="ResultCard" Style="{StaticResource Card}" BackgroundColor="{DynamicResource SurfaceRaised}" VerticalOptions="Center" Margin="20,0" Padding="24,22">
                     <VerticalStackLayout Spacing="12">
                         <Label x:Name="ResultTitle" Style="{StaticResource Title}" HorizontalTextAlignment="Center" />
                         <VerticalStackLayout x:Name="ResultList" Spacing="6" />

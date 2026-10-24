@@ -88,7 +88,7 @@
 
             <Grid x:Name="PausePanel" IsVisible="False">
                 <BoxView Color="#66000000" CornerRadius="20" />
-                <Border x:Name="PauseCard" Style="{StaticResource Card}" BackgroundColor="{DynamicResource SurfaceRaised}" VerticalOptions="Center" HorizontalOptions="Center" Padding="24,22">
+                <Border x:Name="PauseCard" Style="{StaticResource Card}" BackgroundColor="{DynamicResource SurfaceRaised}" VerticalOptions="Center" Margin="20,0" Padding="24,22">
                     <VerticalStackLayout Spacing="12">
                         <Label Text="Paused" Style="{StaticResource Title}" HorizontalTextAlignment="Center" />
                         <Button Text="Continue" Style="{StaticResource PrimaryButton}" Clicked="OnContinue" />
@@ -103,7 +103,7 @@
 
             <Grid x:Name="OverPanel" IsVisible="False">
                 <BoxView Color="#66000000" CornerRadius="20" />
-                <Border x:Name="OverCard" Style="{StaticResource Card}" BackgroundColor="{DynamicResource SurfaceRaised}" VerticalOptions="Center" HorizontalOptions="Center" Padding="24,22">
+                <Border x:Name="OverCard" Style="{StaticResource Card}" BackgroundColor="{DynamicResource SurfaceRaised}" VerticalOptions="Center" Margin="20,0" Padding="24,22">
                     <VerticalStackLayout Spacing="12">
                         <Label x:Name="OverTitle" Text="Game over" Style="{StaticResource Title}" HorizontalTextAlignment="Center" />
                         <Label x:Name="OverScore" FontFamily="OpenSansSemibold" FontSize="52" TextColor="{DynamicResource Accent}" HorizontalTextAlignment="Center" LineHeight="1" />

@@ -40,7 +40,6 @@ public sealed class SheetHost : Grid
         _card = new Border
         {
             VerticalOptions = LayoutOptions.End,
-            HorizontalOptions = LayoutOptions.Center,
             StrokeThickness = 0,
             StrokeShape = new Microsoft.Maui.Controls.Shapes.RoundRectangle { CornerRadius = new CornerRadius(28, 28, 0, 0) },
             Padding = new Thickness(24, 12, 24, 28),
@@ -55,7 +54,7 @@ public sealed class SheetHost : Grid
         Children.Add(_card);
 
         // Full width on phones, a centred 560 dp sheet on tablets.
-        SizeChanged += (_, _) => _card.WidthRequest = Math.Min(560, Width);
+        SizeChanged += (_, _) => _card.Margin = new Thickness(Math.Max(0, (Width - 560) / 2), 0);
     }
 
     public bool IsOpen => _pending is not null;

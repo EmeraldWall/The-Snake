@@ -9,7 +9,7 @@
 
     <Grid RowDefinitions="*,Auto">
         <ScrollView>
-            <VerticalStackLayout x:Name="Body" Padding="20,28,20,20" Spacing="14" HorizontalOptions="Center">
+            <VerticalStackLayout x:Name="Body" Padding="20,28,20,20" Spacing="14">
 
                 <Grid ColumnDefinitions="*,Auto">
                     <VerticalStackLayout Spacing="0">

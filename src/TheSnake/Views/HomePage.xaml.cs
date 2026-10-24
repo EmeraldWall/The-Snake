@@ -17,8 +17,13 @@ public partial class HomePage : ContentPage, IHasSheetHost
     {
         InitializeComponent();
 
-        // Full width on phones, a centred column on tablets and foldables.
-        SizeChanged += (_, _) => Body.WidthRequest = Math.Min(560, Width);
+        // Full width on phones, a centred column on tablets and foldables. Centred with side padding, not a
+        // fixed width: a fixed WidthRequest on a centred stack inside the ScrollView broke the Home layout in 0.3.0.
+        SizeChanged += (_, _) =>
+        {
+            double side = Math.Max(20, (Width - 560) / 2);
+            Body.Padding = new Thickness(side, 28, side, 20);
+        };
         _store.EntitlementChanged += (_, _) => Refresh();
     }
 
@@ -32,6 +37,11 @@ public partial class HomePage : ContentPage, IHasSheetHost
         if (!_started)
         {
             _started = true;
+            if (CrashLog.TakeLast() is { } report)
+            {
+                _ = ShowCrashReportAsync(report);
+            }
+
             // Restore Remove ads first, so a paying player never sees an ad request.
             await _store.RefreshAsync();
             Refresh();
@@ -43,6 +53,19 @@ public partial class HomePage : ContentPage, IHasSheetHost
             // Play Games v2 signs in on its own. This only reads the result.
             await _games.RefreshSignInAsync();
         }
+    }
+
+    private async Task ShowCrashReportAsync(string report)
+    {
+        await Sheets.ShowAsync<object>("Sorry, the game closed", "The Snake stopped unexpectedly last time. Sharing the report helps fix it. It only holds the error details, nothing personal.", h =>
+        [
+            Kit.Primary("Share report", async (_, _) =>
+            {
+                h.Close(null);
+                await Share.Default.RequestAsync(new ShareTextRequest { Title = "The Snake crash report", Text = report });
+            }),
+            Kit.Ghost("Not now", (_, _) => h.Close(null)),
+        ]);
     }
 
     protected override bool OnBackButtonPressed() => Sheets.HandleBack() || base.OnBackButtonPressed();
